@@ -7,9 +7,9 @@
     <ProjectGuid>{DEAF4438-8089-40ED-8175-398E1261D45B}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>JotunnModStub</RootNamespace>
-    <AssemblyName>JotunnModStub</AssemblyName>
-    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
+    <RootNamespace>RagnarsRokare.Factions</RootNamespace>
+    <AssemblyName>RagnarsRokare.Factions</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
     <NuGetPackageImportStamp>
@@ -48,6 +48,9 @@
     <Reference Include="0Harmony, Version=2.9.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\HarmonyX.2.9.0\lib\net45\0Harmony.dll</HintPath>
     </Reference>
+    <Reference Include="BepInEx">
+      <HintPath>..\..\Libs\BepInEx.dll</HintPath>
+    </Reference>
     <Reference Include="Jotunn, Version=2.5.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\JotunnLib.2.5.1\lib\net462\Jotunn.dll</HintPath>
     </Reference>
@@ -81,8 +84,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Factions.cs" />
     <Compile Include="Properties\IgnoreAccessModifiers.cs" />
-    <Compile Include="JotunnModStub.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -101,7 +104,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="JotunnPostBuildTaskWin" Condition="'$(OS)' == 'Windows_NT'">
-    <Exec Command="powershell.exe -ExecutionPolicy RemoteSigned -File &quot;$(SolutionDir)publish.ps1&quot; -Target &quot;$(ConfigurationName)&quot; -TargetPath &quot;$(TargetDir.TrimEnd('\'))&quot; -TargetAssembly &quot;$(TargetFileName)&quot; -ValheimPath &quot;$(VALHEIM_INSTALL.TrimEnd('\'))&quot; -DeployPath &quot;$(MOD_DEPLOYPATH.TrimEnd('\'))&quot; -ProjectPath &quot;$(ProjectDir.TrimEnd('\'))&quot; " />
+    <Exec Command="powershell.exe -ExecutionPolicy RemoteSigned -File &quot;..\publish.ps1&quot; -Target &quot;$(ConfigurationName)&quot; -TargetPath &quot;$(TargetDir.TrimEnd('\'))&quot; -TargetAssembly &quot;$(TargetFileName)&quot; -ValheimPath &quot;$(VALHEIM_INSTALL.TrimEnd('\'))&quot; -DeployPath &quot;$(MOD_DEPLOYPATH.TrimEnd('\'))&quot; -ProjectPath &quot;$(ProjectDir.TrimEnd('\'))&quot; " />
   </Target>
   <PropertyGroup>
     <BuildDependsOn>
@@ -113,7 +116,7 @@
     <PropertyGroup>
       <ErrorText>This project needs a Environment.props file with the path to your Valheim installation. See https://github.com/Valheim-Modding/JotunnModStub. {0} is missing.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('$(SolutionDir)Environment.props')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)Environment.props'))" />
+    <Error Condition="!Exists('..\Environment.props')" Text="$([System.String]::Format('$(ErrorText)', '..\Environment.props'))" />
   </Target>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

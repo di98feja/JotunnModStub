@@ -1,22 +1,22 @@
-﻿// JotunnModStub
-// a Valheim mod skeleton using Jötunn
+﻿// RagnarsRokare.Factions
+// a Valheim mod 
 // 
-// File:    JotunnModStub.cs
-// Project: JotunnModStub
+// File:    Factions.cs
+// Project: RagnarsRokare.Factions
 
 using BepInEx;
 using Jotunn.Entities;
 using Jotunn.Managers;
 
-namespace JotunnModStub
+namespace RagnarsRokare.Factions
 {
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
     [BepInDependency(Jotunn.Main.ModGuid)]
     //[NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
-    internal class JotunnModStub : BaseUnityPlugin
+    internal class Factions : BaseUnityPlugin
     {
-        public const string PluginGUID = "com.jotunn.jotunnmodstub";
-        public const string PluginName = "JotunnModStub";
+        public const string PluginGUID = "025F5D7C-8046-4A18-9539-58289CA229EA";
+        public const string PluginName = "RagnarsRokare.Factions";
         public const string PluginVersion = "0.0.1";
         
         // Use this class to add your own localization to the game
@@ -30,7 +30,7 @@ namespace JotunnModStub
             On.FejdStartup.Awake += FejdStartup_Awake;
             
             // Jotunn comes with its own Logger class to provide a consistent Log style for all mods using it
-            Jotunn.Logger.LogInfo("ModStub has landed");
+            Jotunn.Logger.LogInfo($"{PluginName} v{PluginVersion} has landed");
             
             // To learn more about Jotunn's features, go to
             // https://valheim-modding.github.io/Jotunn/tutorials/overview.html
