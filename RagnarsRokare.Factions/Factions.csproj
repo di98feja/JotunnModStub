@@ -75,6 +75,15 @@
     <Reference Include="MonoMod.Utils, Version=22.1.29.1, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MonoMod.Utils.22.1.29.1\lib\net452\MonoMod.Utils.dll</HintPath>
     </Reference>
+    <Reference Include="RagnarsRokare.MobAILib">
+      <HintPath>..\libraries\RagnarsRokare.MobAILib.dll</HintPath>
+    </Reference>
+    <Reference Include="RagnarsRokare.MobAILibServer">
+      <HintPath>..\libraries\RagnarsRokare.MobAILibServer.dll</HintPath>
+    </Reference>
+    <Reference Include="stateless">
+      <HintPath>..\libraries\stateless.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
