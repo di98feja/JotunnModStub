@@ -75,6 +75,9 @@
     <Reference Include="MonoMod.Utils, Version=22.1.29.1, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MonoMod.Utils.22.1.29.1\lib\net452\MonoMod.Utils.dll</HintPath>
     </Reference>
+    <Reference Include="RagnarsRokare.Common">
+      <HintPath>..\libraries\RagnarsRokare.Common.dll</HintPath>
+    </Reference>
     <Reference Include="RagnarsRokare.MobAILib">
       <HintPath>..\libraries\RagnarsRokare.MobAILib.dll</HintPath>
     </Reference>
@@ -94,11 +97,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Factions.cs" />
+    <Compile Include="Helpers.cs" />
+    <Compile Include="Managers\NpcManager.cs" />
+    <Compile Include="NpcAI.cs" />
+    <Compile Include="Patches\Character_patches.cs" />
     <Compile Include="Properties\IgnoreAccessModifiers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <EmbeddedResource Include="AssetBundles\npc" />
     <None Include="packages.config" />
     <None Include="README.md" />
   </ItemGroup>

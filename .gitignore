@@ -374,3 +374,26 @@ Environment.props
 # not the generated dll for thunderstore
 */Package/plugins/*
 /libraries
+/RagnarsRokare.Factions.Unity/Assets/AnimationClip
+/RagnarsRokare.Factions.Unity/Assets/AnimatorController
+/RagnarsRokare.Factions.Unity/Assets/AudioClip
+/RagnarsRokare.Factions.Unity/Assets/Avatar
+/RagnarsRokare.Factions.Unity/Assets/Material
+/RagnarsRokare.Factions.Unity/Assets/Mesh
+/RagnarsRokare.Factions.Unity/Assets/PhysicMaterial
+/RagnarsRokare.Factions.Unity/Assets/PrefabInstance
+/RagnarsRokare.Factions.Unity/Assets/Shader
+/RagnarsRokare.Factions.Unity/Assets/Texture2D
+/RagnarsRokare.Factions.Unity/Assets/VanillaScripts
+/RagnarsRokare.Factions.Unity/Assets/AnimationClip.meta
+/RagnarsRokare.Factions.Unity/Assets/VanillaScripts.meta
+/RagnarsRokare.Factions.Unity/Assets/Texture2D.meta
+/RagnarsRokare.Factions.Unity/Assets/Shader.meta
+/RagnarsRokare.Factions.Unity/Assets/PrefabInstance.meta
+/RagnarsRokare.Factions.Unity/Assets/PhysicMaterial.meta
+/RagnarsRokare.Factions.Unity/Assets/Mesh.meta
+/RagnarsRokare.Factions.Unity/Assets/Material.meta
+/RagnarsRokare.Factions.Unity/Assets/Avatar.meta
+/RagnarsRokare.Factions.Unity/Assets/AudioClip.meta
+/RagnarsRokare.Factions.Unity/Assets/AnimatorController.meta
+/RagnarsRokare.Factions/AssetBundles/npc
