@@ -96,11 +96,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Config\NpcAIConfig.cs" />
+    <Compile Include="Constants.cs" />
     <Compile Include="Factions.cs" />
+    <Compile Include="Managers\LocationsManager.cs" />
+    <Compile Include="Managers\MotivationManager.cs" />
+    <Compile Include="Models\Faction.cs" />
+    <Compile Include="Managers\FactionManager.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="Managers\NpcManager.cs" />
+    <Compile Include="Managers\StandingsManager.cs" />
     <Compile Include="NpcAI.cs" />
     <Compile Include="Patches\Character_patches.cs" />
+    <Compile Include="Patches\Tamable_patches.cs" />
     <Compile Include="Properties\IgnoreAccessModifiers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace RagnarsRokare.Factions
 {
-    internal class NpcManager
+    internal static class NpcManager
     {
         private static Jotunn.Configs.CreatureConfig NpcConfig { get; set; }
         private static readonly System.Random m_random = new System.Random();
@@ -28,14 +28,38 @@ namespace RagnarsRokare.Factions
             embeddedResourceBundle.Unload(false);
         }
 
+        public static GameObject CreateRandomizedNpc(Transform parent, Vector3 localPosition)
+        {
+            var prefab = CreatureManager.Instance.GetCreaturePrefab(NpcConfig.Name);
+
+            var npc = UnityEngine.Object.Instantiate(prefab, parent);
+            npc.transform.localPosition = localPosition;
+            return npc;
+        }
+
         public static GameObject CreateRandomizedNpc(Vector3 position)
         {
             var prefab = CreatureManager.Instance.GetCreaturePrefab(NpcConfig.Name);
 
             var npc = UnityEngine.Object.Instantiate(prefab, position, Quaternion.LookRotation(Vector3.forward));
+            InitNpc(npc);
+            return npc;
+        }
+
+        public static bool NeedsInit(GameObject npc)
+        {
+            return npc.GetComponent<Tameable>() != null;
+        }
+
+        public static void InitNpc(GameObject npc)
+        {
             var nview = npc.GetComponent<ZNetView>();
+            if (!nview.IsValid()) return;
+
             nview.GetZDO().m_persistent = true;
+            nview.GetZDO().Set(Misc.Constants.Z_Faction, FactionManager.DefaultNPCFactionId);
             Tameable tameable = Helpers.GetOrAddTameable(npc);
+            npc.GetComponent<MonsterAI>().MakeTame();
             var name = CreateNpcName();
             tameable.SetText(name);
             npc.GetComponent<Character>().m_name = name;
@@ -48,7 +72,6 @@ namespace RagnarsRokare.Factions
                 visEquip.SetBeardItem($"Beard{(beardNr == 0 ? "None" : beardNr.ToString())}");
             }
             visEquip.SetHairItem($"Hair{(hairNr == 0 ? "None" : hairNr.ToString())}");
-            return npc;
         }
 
         private static string CreateNpcName()

@@ -13,14 +13,19 @@ namespace RagnarsRokare.Factions
             static void Postfix(Character __instance, ref ZNetView ___m_nview)
             {
                 if (!__instance.name.Contains("NPC")) return;
+                if (NpcManager.NeedsInit(__instance.gameObject))
+                {
+                    NpcManager.InitNpc(__instance.gameObject);
+                }
 
                 var ai = __instance.GetBaseAI() as MonsterAI;
-                var mobInfo = new WorkerAIConfig
+                var mobInfo = new NpcAIConfig
                 {
                     Agressiveness = UnityEngine.Random.Range(1, 10),
                     Awareness = UnityEngine.Random.Range(1, 10),
                     Intelligence = UnityEngine.Random.Range(1, 10),
                     Mobility = UnityEngine.Random.Range(1, 10),
+                    EatInterval = 60
                 };
                 Tameable tameable = Helpers.GetOrAddTameable(__instance.gameObject);
                 tameable.m_commandable = true;
@@ -28,7 +33,7 @@ namespace RagnarsRokare.Factions
 
                 try
                 {
-                    MobManager.RegisterMob(__instance, uniqueId, "Worker", mobInfo);
+                    MobManager.RegisterMob(__instance, uniqueId, "NpcAI", mobInfo);
                 }
                 catch (ArgumentException e)
                 {
@@ -37,7 +42,7 @@ namespace RagnarsRokare.Factions
                 }
                 __instance.m_faction = Character.Faction.Players;
                 ai.m_consumeItems.Clear();
-                ai.m_consumeItems.AddRange(CreateDropItemList(new string[] { "Raspberry,Honey,Blueberries" }));
+                ai.m_consumeItems.AddRange(CreateDropItemList(new string[] { "Raspberry","Honey","Blueberries" }));
                 ai.m_consumeSearchRange = mobInfo.Awareness * 5;
                 ai.m_randomMoveRange = mobInfo.Mobility * 2;
                 ai.m_randomMoveInterval = 15 - mobInfo.Mobility;

@@ -9,12 +9,14 @@ using HarmonyLib;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using Jotunn.Utils;
+using System.Reflection;
 using UnityEngine;
 
 namespace RagnarsRokare.Factions
 {
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
     [BepInDependency(Jotunn.Main.ModGuid)]
+    [BepInDependency(MobAI.MobAILib.ModId)]
     //[NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
     internal class Factions : BaseUnityPlugin
     {
@@ -30,6 +32,10 @@ namespace RagnarsRokare.Factions
         {
             LoadAssets();
             InitInputs();
+            Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
+
+            MobAI.MobManager.RegisterMobAI(typeof(NpcAI));
+            ZoneManager.OnVanillaLocationsAvailable += Managers.LocationsManager.SetupNpcLocations;
 
             // Jotunn comes with MonoMod Detours enabled for hooking Valheim's code
             // https://github.com/MonoMod/MonoMod
