@@ -47,6 +47,7 @@ namespace RagnarsRokare.Factions
                 ai.m_randomMoveRange = mobInfo.Mobility * 2;
                 ai.m_randomMoveInterval = 15 - mobInfo.Mobility;
                 string givenName = ___m_nview?.GetZDO()?.GetString(Constants.Z_GivenName);
+
                 Jotunn.Logger.LogInfo($"{__instance.m_name} woke up");
             }
         }

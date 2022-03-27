@@ -160,7 +160,7 @@ namespace RagnarsRokare.Factions
                 .Permit(Trigger.SearchForItems, searchForItemsBehaviour.StartState)
                 .OnEntry(t =>
                 {
-                    Common.Dbgl($"{Character.GetHoverName()}:ConfigureSearchContainers Initiated", true, "Sorter");
+                    Common.Dbgl($"{Character.GetHoverName()}:ConfigureSearchContainers Initiated", true, "NPC");
                     searchForItemsBehaviour.KnownContainers = m_containers;
                     searchForItemsBehaviour.Items = t.Parameters[0] as IEnumerable<ItemDrop.ItemData>;
                     searchForItemsBehaviour.AcceptedContainerNames = m_config.AcceptedContainers;
@@ -227,6 +227,8 @@ namespace RagnarsRokare.Factions
             {
                 return 2; // Have roof but no fire
             }
+
+            
 
             return Helpers.GetComfortFromNearbyPieces(bed.transform.position) + 2; 
         }

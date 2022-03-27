@@ -109,12 +109,14 @@
     <Compile Include="NpcAI.cs" />
     <Compile Include="Patches\Character_patches.cs" />
     <Compile Include="Patches\Tamable_patches.cs" />
+    <Compile Include="Patches\ZoneSystem_patchs.cs" />
     <Compile Include="Properties\IgnoreAccessModifiers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
     <EmbeddedResource Include="AssetBundles\npc" />
+    <EmbeddedResource Include="AssetBundles\npcbed" />
     <None Include="packages.config" />
     <None Include="README.md" />
   </ItemGroup>

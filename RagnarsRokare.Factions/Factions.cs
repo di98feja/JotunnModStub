@@ -9,6 +9,7 @@ using HarmonyLib;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using Jotunn.Utils;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
@@ -32,20 +33,50 @@ namespace RagnarsRokare.Factions
         {
             LoadAssets();
             InitInputs();
+
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
 
             MobAI.MobManager.RegisterMobAI(typeof(NpcAI));
-            ZoneManager.OnVanillaLocationsAvailable += Managers.LocationsManager.SetupNpcLocations;
+            ZoneManager.OnVanillaLocationsAvailable += LocationsManager.SetupNpcLocations;
 
             // Jotunn comes with MonoMod Detours enabled for hooking Valheim's code
             // https://github.com/MonoMod/MonoMod
             On.FejdStartup.Awake += FejdStartup_Awake;
-
+            On.ZRoutedRpc.ctor += InitRPCs;
+            On.Bed.Awake += Bed_Awake;
+            On.Player.OnSpawned += Player_OnSpawned;
             // Jotunn comes with its own Logger class to provide a consistent Log style for all mods using it
             Jotunn.Logger.LogInfo($"{PluginName} v{PluginVersion} has landed");
 
             // To learn more about Jotunn's features, go to
             // https://valheim-modding.github.io/Jotunn/tutorials/overview.html
+        }
+
+        private void Player_OnSpawned(On.Player.orig_OnSpawned orig, Player self)
+        {
+            orig(self);
+            foreach (var loc in ZoneSystem.instance.m_locationInstances)
+            {
+                if (loc.Value.m_location.m_prefabName.Contains("WoodHouse") && loc.Value.m_location.m_netViews.Any(z => z.gameObject.name.Contains("goblin_bed")))
+                {
+                    Minimap.instance.AddPin(loc.Value.m_position, Minimap.PinType.Bed, loc.Value.m_location.m_prefabName, !(loc.Value.m_location.m_netViews.FirstOrDefault(n => n.gameObject.GetComponent<Bed>()) ?? false), false);
+                }
+            }
+        }
+
+        private void Bed_Awake(On.Bed.orig_Awake orig, Bed self)
+        {
+            orig(self);
+            if (self.name.StartsWith("goblin_bed"))
+            {
+                if (self.GetOwner() == 0L)
+                {
+                    var npc = NpcManager.CreateRandomizedNpc(self.transform.position);
+                    npc.SetActive(false);
+                    var npcZdo = npc.GetComponent<ZNetView>().GetZDO();
+                    self.SetOwner(npcZdo.m_uid.id, npc.GetComponent<Tameable>().GetHoverName());
+                }
+            }
         }
 
         private void FejdStartup_Awake(On.FejdStartup.orig_Awake orig, FejdStartup self)
@@ -60,10 +91,17 @@ namespace RagnarsRokare.Factions
             Jotunn.Logger.LogInfo("FejdStartup has awoken");
         }
 
+        private void InitRPCs(On.ZRoutedRpc.orig_ctor orig, global::ZRoutedRpc self, bool server)
+        {
+            orig(self, server);
+            NpcManager.InitRPCs();
+        }
+
         private void LoadAssets()
         {
             // Load asset bundle from embedded resources
             NpcManager.LoadAssets();
+            LocationsManager.LoadAssets();
         }
 
         private void InitInputs()

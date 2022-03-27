@@ -1,54 +1,81 @@
 ﻿using Jotunn.Entities;
 using Jotunn.Managers;
 using Jotunn.Utils;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace RagnarsRokare.Factions
 {
     internal static class NpcManager
     {
-        private static Jotunn.Configs.CreatureConfig NpcConfig { get; set; }
+        private static GameObject m_npcPrefab;
         private static readonly System.Random m_random = new System.Random();
+        private static List<ZDOID> m_allNpcZDOIDs = new List<ZDOID>();
+
+        public static void InitRPCs()
+        {
+            //ZRoutedRpc.instance.Register<ZPackage>(Constants.Z_RegisteredMobsChangedEvent, RegisteredMobsChangedEvent_RPC);
+        }
+
+        internal static void RegisteredMobsChangedEvent_RPC(long sender, ZPackage pkg)
+        {
+            Debug.Log("Got RegisteredMobsChangedEvent to NpcManager");
+            m_allNpcZDOIDs.Clear();
+            bool endOfStream = false;
+
+            while (!endOfStream)
+            {
+                try
+                {
+                    m_allNpcZDOIDs.Add(pkg.ReadZDOID());
+                }
+                catch (System.IO.EndOfStreamException)
+                {
+                    endOfStream = true;
+                }
+            }
+            Debug.Log($"NpcManager now track {m_allNpcZDOIDs.Count} NPCs");
+        }
 
         public static void LoadAssets()
         {
             var embeddedResourceBundle = AssetUtils.LoadAssetBundleFromResources("npc", typeof(Factions).Assembly);
-            var npcPrefab = embeddedResourceBundle.LoadAsset<GameObject>("Assets/PrefabInstance/NPC.prefab");
+            m_npcPrefab = embeddedResourceBundle.LoadAsset<GameObject>("Assets/PrefabInstance/NPC.prefab");
             Jotunn.Logger.LogInfo($"Embedded resources: {string.Join(",", typeof(Factions).Assembly.GetManifestResourceNames())}");
+            PrefabManager.Instance.AddPrefab(m_npcPrefab);
 
-            NpcConfig = new Jotunn.Configs.CreatureConfig
-            {
-                Name = "NPC",
-                SpawnConfigs = new[]
-                {
-                    new Jotunn.Configs.SpawnConfig { WorldSpawnEnabled = false }
-                }
-            };
-            CreatureManager.Instance.AddCreature(new CustomCreature(npcPrefab.gameObject, true, NpcConfig));
             embeddedResourceBundle.Unload(false);
+        }
+
+        public static ZDO[] GetAllActiveNPCs()
+        {
+            var zdoList = new List<ZDO>();
+            foreach (var zid in m_allNpcZDOIDs)
+            {
+                var zdo = ZDOMan.instance.GetZDO(zid);
+                if (!(zdo?.IsValid() ?? false)) continue;
+                zdoList.Add(zdo);
+            }
+            return zdoList.ToArray();
         }
 
         public static GameObject CreateRandomizedNpc(Transform parent, Vector3 localPosition)
         {
-            var prefab = CreatureManager.Instance.GetCreaturePrefab(NpcConfig.Name);
-
-            var npc = UnityEngine.Object.Instantiate(prefab, parent);
+            var npc = UnityEngine.Object.Instantiate(m_npcPrefab, parent);
             npc.transform.localPosition = localPosition;
             return npc;
         }
 
         public static GameObject CreateRandomizedNpc(Vector3 position)
         {
-            var prefab = CreatureManager.Instance.GetCreaturePrefab(NpcConfig.Name);
-
-            var npc = UnityEngine.Object.Instantiate(prefab, position, Quaternion.LookRotation(Vector3.forward));
-            InitNpc(npc);
+            var npc = UnityEngine.Object.Instantiate(m_npcPrefab, position, Quaternion.LookRotation(Vector3.forward));
+            //InitNpc(npc);
             return npc;
         }
 
         public static bool NeedsInit(GameObject npc)
         {
-            return npc.GetComponent<Tameable>() != null;
+            return !npc.GetComponent<Character>().IsTamed();
         }
 
         public static void InitNpc(GameObject npc)
@@ -56,10 +83,13 @@ namespace RagnarsRokare.Factions
             var nview = npc.GetComponent<ZNetView>();
             if (!nview.IsValid()) return;
 
+            bool valid = ZNetScene.instance.IsPrefabZDOValid(nview.GetZDO());
+
             nview.GetZDO().m_persistent = true;
             nview.GetZDO().Set(Misc.Constants.Z_Faction, FactionManager.DefaultNPCFactionId);
+            nview.GetZDO().SetPrefab(nview.GetPrefabName().GetStableHashCode());
             Tameable tameable = Helpers.GetOrAddTameable(npc);
-            npc.GetComponent<MonsterAI>().MakeTame();
+            npc.GetComponent<Character>().SetTamed(tamed: true);
             var name = CreateNpcName();
             tameable.SetText(name);
             npc.GetComponent<Character>().m_name = name;
@@ -72,6 +102,14 @@ namespace RagnarsRokare.Factions
                 visEquip.SetBeardItem($"Beard{(beardNr == 0 ? "None" : beardNr.ToString())}");
             }
             visEquip.SetHairItem($"Hair{(hairNr == 0 ? "None" : hairNr.ToString())}");
+            var humanoid = npc.GetComponent<Humanoid>();
+
+            humanoid.GiveDefaultItems();
+            foreach (var item in humanoid.m_defaultItems)
+            {
+                humanoid.EquipItem(item.GetComponent<ItemDrop>().m_itemData, false);
+            }
+            npc.GetComponent<Humanoid>().HideHandItems();
         }
 
         private static string CreateNpcName()
