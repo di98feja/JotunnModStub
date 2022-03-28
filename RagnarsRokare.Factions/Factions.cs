@@ -43,7 +43,8 @@ namespace RagnarsRokare.Factions
             // https://github.com/MonoMod/MonoMod
             On.FejdStartup.Awake += FejdStartup_Awake;
             On.ZRoutedRpc.ctor += InitRPCs;
-            On.Bed.Awake += Bed_Awake;
+            On.Bed.Awake += Bed_patch.Bed_Awake;
+
             On.Player.OnSpawned += Player_OnSpawned;
             // Jotunn comes with its own Logger class to provide a consistent Log style for all mods using it
             Jotunn.Logger.LogInfo($"{PluginName} v{PluginVersion} has landed");
@@ -60,21 +61,6 @@ namespace RagnarsRokare.Factions
                 if (loc.Value.m_location.m_prefabName.Contains("WoodHouse") && loc.Value.m_location.m_netViews.Any(z => z.gameObject.name.Contains("goblin_bed")))
                 {
                     Minimap.instance.AddPin(loc.Value.m_position, Minimap.PinType.Bed, loc.Value.m_location.m_prefabName, !(loc.Value.m_location.m_netViews.FirstOrDefault(n => n.gameObject.GetComponent<Bed>()) ?? false), false);
-                }
-            }
-        }
-
-        private void Bed_Awake(On.Bed.orig_Awake orig, Bed self)
-        {
-            orig(self);
-            if (self.name.StartsWith("goblin_bed"))
-            {
-                if (self.GetOwner() == 0L)
-                {
-                    var npc = NpcManager.CreateRandomizedNpc(self.transform.position);
-                    npc.SetActive(false);
-                    var npcZdo = npc.GetComponent<ZNetView>().GetZDO();
-                    self.SetOwner(npcZdo.m_uid.id, npc.GetComponent<Tameable>().GetHoverName());
                 }
             }
         }

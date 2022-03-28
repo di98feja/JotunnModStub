@@ -205,18 +205,18 @@ namespace RagnarsRokare.Factions
         private int CalculateComfortLevel()
         {
             Jotunn.Logger.LogDebug($"{Character.m_name}:CalculateComfortLevel");
-            var bed = Instance.gameObject.GetComponent<Bed>();
-            if (!bed) return 0; // No bed, no comfort
+            var bedZDOId = NView.GetZDO().GetZDOID(Misc.Constants.Z_NpcBedOwnerId);
+            if (bedZDOId == ZDOID.None) return 0; // No bed, no comfort
 
-            var bedNView = bed.GetComponent<ZNetView>();
-            if (!bedNView || !bedNView.IsValid()) return -1; // Bed has no instance, can't calculate, keep old value
+            var bedGO = ZNetScene.instance.FindInstance(bedZDOId);
+            if (!bedGO || !bedGO.GetComponent<ZNetView>().IsValid()) return -1; // Bed has no instance, can't calculate, keep old value
 
-            var bedZdo = bedNView.GetZDO();
-            var ownerNpcId = bedZdo.GetString(Misc.Constants.Z_NpcBedOwnerId);
-            if (string.IsNullOrEmpty(ownerNpcId) || ownerNpcId != base.UniqueID)
+            var bed = bedGO.GetComponent<Bed>();
+            var ownerNpcId = bed.GetOwner();
+            if (ownerNpcId != NView.GetZDO().m_uid.id)
             {
-                // We are no longer bound to this bed, remove component
-                UnityEngine.Object.Destroy(bed);
+                // We are no longer bound to this bed, remove reference
+                NView.GetZDO().Set(Misc.Constants.Z_NpcBedOwnerId, ZDOID.None);
                 return 0;
             }
 
@@ -227,8 +227,6 @@ namespace RagnarsRokare.Factions
             {
                 return 2; // Have roof but no fire
             }
-
-            
 
             return Helpers.GetComfortFromNearbyPieces(bed.transform.position) + 2; 
         }

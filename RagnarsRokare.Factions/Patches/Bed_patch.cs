@@ -1,0 +1,21 @@
+﻿namespace RagnarsRokare.Factions
+{
+    internal class Bed_patch
+    {
+        internal static void Bed_Awake(On.Bed.orig_Awake orig, Bed self)
+        {
+            orig(self);
+            if (self.name.StartsWith("goblin_bed"))
+            {
+                if (self.GetOwner() == 0L)
+                {
+                    var npc = NpcManager.CreateRandomizedNpc(self.transform.position);
+                    npc.SetActive(false);
+                    var npcZdo = npc.GetComponent<ZNetView>().GetZDO();
+                    self.SetOwner(npcZdo.m_uid.id, npc.GetComponent<Tameable>().GetHoverName());
+                    npcZdo.Set(Misc.Constants.Z_NpcBedOwnerId, self.m_nview.GetZDO().m_uid);
+                }
+            }
+        }
+    }
+}

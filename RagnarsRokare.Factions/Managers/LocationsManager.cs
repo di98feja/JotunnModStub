@@ -26,6 +26,9 @@ namespace RagnarsRokare.Factions
 
         public static void SetupNpcLocations()
         {
+            var goblinBedPrefab = PrefabManager.Instance.GetPrefab("goblin_bed");
+            goblinBedPrefab.gameObject.AddComponent<Bed>();
+
             string[] npcLocations = new string[] { "WoodHouse1", "WoodHouse2", "WoodHouse5", "WoodHouse6", "WoodHouse7", "WoodHouse9", "WoodHouse10", "WoodHouse11", "WoodHouse13" };
             foreach (var npcLocation in npcLocations)
             {
