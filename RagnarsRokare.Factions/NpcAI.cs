@@ -27,6 +27,9 @@ namespace RagnarsRokare.Factions
         public MaxStack<Container> m_containers;
         readonly NpcAIConfig m_config;
 
+        private string m_emoteState = "";
+        private int m_emoteID;
+
         public const float CalculateComfortLevelInterval = 10f;
 
         public class State
@@ -173,6 +176,8 @@ namespace RagnarsRokare.Factions
         public override void UpdateAI(float dt)
         {
             base.UpdateAI(dt);
+            EmoteManager.UpdateEmote(NView, ref m_emoteState, ref m_emoteID, Character.GetComponentInChildren<Animator>());
+
             m_triggerTimer += dt;
             if (m_triggerTimer < 0.1f) return;
 
@@ -204,6 +209,8 @@ namespace RagnarsRokare.Factions
 
         private int CalculateComfortLevel()
         {
+            StartEmote(EmoteManager.Emotes.Challenge);
+
             Jotunn.Logger.LogDebug($"{Character.m_name}:CalculateComfortLevel");
             var bedZDOId = NView.GetZDO().GetZDOID(Misc.Constants.Z_NpcBedOwnerId);
             if (bedZDOId == ZDOID.None) return 0; // No bed, no comfort
@@ -236,6 +243,11 @@ namespace RagnarsRokare.Factions
             throw new NotImplementedException();
         }
 
+        public void StartEmote(EmoteManager.Emotes emoteName, bool oneshot = true)
+        {
+            EmoteManager.StartEmote(NView, emoteName, oneshot);
+        }
+
         public MobAIInfo GetMobAIInfo()
         {
             return new MobAIInfo
@@ -253,7 +265,7 @@ namespace RagnarsRokare.Factions
 
         protected override void RPC_MobCommand(long sender, ZDOID playerId, string command)
         {
-            throw new NotImplementedException();
+            
         }
     }
 }

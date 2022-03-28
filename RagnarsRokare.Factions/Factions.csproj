@@ -99,6 +99,7 @@
     <Compile Include="Config\NpcAIConfig.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Factions.cs" />
+    <Compile Include="Managers\EmoteManager.cs" />
     <Compile Include="Managers\LocationsManager.cs" />
     <Compile Include="Managers\MotivationManager.cs" />
     <Compile Include="Models\Faction.cs" />

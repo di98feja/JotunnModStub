@@ -62,6 +62,11 @@ namespace RagnarsRokare.Factions.Patches
                     var standing = StandingsManager.GetStandingTowards(npcZdo, playerFactionId);
                     if (standing <= Misc.Constants.KnownStanding)
                     {
+                        var npcAi = MobAI.MobManager.AliveMobs[npcZdo.GetString(Constants.Z_UniqueId)] as NpcAI;
+                        if (npcAi != null)
+                        {
+                            npcAi.StartEmote(EmoteManager.Emotes.Nonono);
+                        }
                         __instance.GetComponent<Talker>().Say(Talker.Type.Normal, "Who are you? Go away!");
                         __result = false;
                         return false;
