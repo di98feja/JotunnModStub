@@ -15,10 +15,15 @@ namespace RagnarsRokare.Factions
         private float m_triggerTimer;
         private float m_stuckInIdleTimer;
         private float m_calculateComfortTimer;
+        private float m_fleeTimer;
+
+        // Settings
+        public float FleeTimeout { get; private set; } = 10f;
 
         // Behaviours
         readonly EatingBehaviour eatingBehaviour;
         readonly SearchForItemsBehaviour searchForItemsBehaviour;
+        readonly IFightBehaviour fightBehaviour;
 
         // Triggers
         readonly StateMachine<string, string>.TriggerWithParameters<float> UpdateTrigger;
@@ -50,6 +55,8 @@ namespace RagnarsRokare.Factions
             public const string TakeDamage = "TakeDamage";
             public const string Hungry = "Hungry";
             public const string SearchForItems = "SearchForItems";
+            public const string Fight = "Fight";
+            public const string Follow = "Follow";
         }
 
         public int HungerLevel
@@ -119,19 +126,23 @@ namespace RagnarsRokare.Factions
 
             searchForItemsBehaviour = new SearchForItemsBehaviour();
             searchForItemsBehaviour.Configure(this, Brain, State.SearchForItems);
+            fightBehaviour = Activator.CreateInstance(FightingBehaviourSelector.Invoke(this)) as IFightBehaviour;
+            fightBehaviour.Configure(this, Brain, State.Fight);
 
 
             ConfigureRoot();
             ConfigureHungry();
             ConfigureIdle();
             ConfigureSearchForItems();
+            ConfigureFight();
+            ConfigureFlee();
         }
 
         private void ConfigureRoot()
         {
             Brain.Configure(State.Root)
                 .InitialTransition(State.Idle)
-                .PermitIf(Trigger.TakeDamage, State.Fight, () => !Brain.IsInState(State.Flee) && !Brain.IsInState(State.Fight) && (TimeSinceHurt < 20.0f || Common.Alarmed(Instance, 1)));
+                .PermitIf(Trigger.TakeDamage, State.Fight, () => !Brain.IsInState(State.Flee) && !Brain.IsInState(State.Fight) && (TimeSinceHurt < 20.0f || Common.Alarmed(Instance, 10)));
         }
 
         private void ConfigureHungry()
@@ -151,8 +162,56 @@ namespace RagnarsRokare.Factions
                 .PermitIf(Trigger.Hungry, eatingBehaviour.StartState, () => eatingBehaviour.IsHungry(IsHurt))
                 .OnEntry(t =>
                 {
+                    Debug.Log($"{Instance.name} enter Idle state ");
                     m_stuckInIdleTimer = 0;
                     UpdateAiStatus(State.Idle);
+                });
+        }
+
+        private void ConfigureFight()
+        {
+            Brain.Configure(State.Fight)
+                .SubstateOf(State.Root)
+                .Permit(Trigger.Fight, fightBehaviour.StartState)
+                .OnEntry(t =>
+                {
+                    Debug.Log($"{Instance.name} enter Fight state ");
+                    fightBehaviour.SuccessState = State.Idle;
+                    fightBehaviour.FailState = State.Flee;
+                    fightBehaviour.MobilityLevel = 5;
+                    fightBehaviour.AgressionLevel = 2;
+                    fightBehaviour.AwarenessLevel = 10;
+
+                    Brain.Fire(Trigger.Fight);
+                })
+                .OnExit(t =>
+                {
+                    ItemDrop.ItemData currentWeapon = (Character as Humanoid).GetCurrentWeapon();
+                    if (null != currentWeapon)
+                    {
+                        (Character as Humanoid).UnequipItem(currentWeapon);
+                    }
+                    Invoke<MonsterAI>(Instance, "SetAlerted", false);
+                });
+        }
+
+        private void ConfigureFlee()
+        {
+            Brain.Configure(State.Flee)
+                .SubstateOf(State.Root)
+                .PermitIf(UpdateTrigger, State.Idle, (arg) => (m_fleeTimer += arg) > FleeTimeout && !Common.Alarmed(Instance, Mathf.Max(1, Awareness - 1)))
+                .OnEntry(t =>
+                {
+                    Debug.Log($"{Instance.name} enter Flee state ");
+                    m_fleeTimer = 0f;
+                    UpdateAiStatus(State.Flee);
+                    Instance.Alert();
+                })
+                .OnExit(t =>
+                {
+                    Invoke<MonsterAI>(Instance, "SetAlerted", false);
+                    Attacker = null;
+                    StopMoving();
                 });
         }
 
@@ -163,6 +222,7 @@ namespace RagnarsRokare.Factions
                 .Permit(Trigger.SearchForItems, searchForItemsBehaviour.StartState)
                 .OnEntry(t =>
                 {
+                    Debug.Log($"{Instance.name} enter SearchForItems state ");
                     Common.Dbgl($"{Character.GetHoverName()}:ConfigureSearchContainers Initiated", true, "NPC");
                     searchForItemsBehaviour.KnownContainers = m_containers;
                     searchForItemsBehaviour.Items = t.Parameters[0] as IEnumerable<ItemDrop.ItemData>;
@@ -183,11 +243,14 @@ namespace RagnarsRokare.Factions
 
             m_triggerTimer = 0f;
 
-            // Update active behaviours
+            // Update eating behaviours
             eatingBehaviour.Update(this, dt);
 
             // Update runtime triggers
             Brain.Fire(Trigger.Hungry);
+            Brain.Fire(Trigger.TakeDamage);
+            Brain.Fire(Trigger.Follow);
+            Brain.Fire(UpdateTrigger, dt);
 
             if (Time.time > m_calculateComfortTimer)
             {
@@ -202,6 +265,19 @@ namespace RagnarsRokare.Factions
             if (Brain.IsInState(State.SearchForItems))
             {
                 searchForItemsBehaviour.Update(this, dt);
+                return;
+            }
+
+            if (Brain.IsInState(State.Fight))
+            {
+                fightBehaviour.Update(this, dt);
+                return;
+            }
+
+            if (Brain.IsInState(State.Flee))
+            {
+                var fleeFrom = Attacker == null ? Character.transform.position : Attacker.transform.position;
+                Invoke<MonsterAI>(Instance, "Flee", dt, fleeFrom);
                 return;
             }
 
