@@ -209,8 +209,6 @@ namespace RagnarsRokare.Factions
 
         private int CalculateComfortLevel()
         {
-            StartEmote(EmoteManager.Emotes.Challenge);
-
             Jotunn.Logger.LogDebug($"{Character.m_name}:CalculateComfortLevel");
             var bedZDOId = NView.GetZDO().GetZDOID(Misc.Constants.Z_NpcBedOwnerId);
             if (bedZDOId == ZDOID.None) return 0; // No bed, no comfort
