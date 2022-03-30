@@ -142,7 +142,7 @@ namespace RagnarsRokare.Factions
         {
             Brain.Configure(State.Root)
                 .InitialTransition(State.Idle)
-                .PermitIf(Trigger.TakeDamage, State.Fight, () => !Brain.IsInState(State.Flee) && !Brain.IsInState(State.Fight) && (TimeSinceHurt < 20.0f || Common.Alarmed(Instance, 10)));
+                .PermitIf(Trigger.TakeDamage, State.Fight, () => !Brain.IsInState(State.Flee) && !Brain.IsInState(State.Fight) && (TimeSinceHurt < 20.0f || Common.Alarmed(Instance, base.Mobility)));
         }
 
         private void ConfigureHungry()
@@ -178,9 +178,9 @@ namespace RagnarsRokare.Factions
                     Debug.Log($"{Instance.name} enter Fight state ");
                     fightBehaviour.SuccessState = State.Idle;
                     fightBehaviour.FailState = State.Flee;
-                    fightBehaviour.MobilityLevel = 5;
-                    fightBehaviour.AgressionLevel = 2;
-                    fightBehaviour.AwarenessLevel = 10;
+                    fightBehaviour.MobilityLevel = base.Mobility;
+                    fightBehaviour.AgressionLevel = base.Agressiveness;
+                    fightBehaviour.AwarenessLevel = base.Awareness;
 
                     Brain.Fire(Trigger.Fight);
                 })
@@ -199,7 +199,7 @@ namespace RagnarsRokare.Factions
         {
             Brain.Configure(State.Flee)
                 .SubstateOf(State.Root)
-                .PermitIf(UpdateTrigger, State.Idle, (arg) => (m_fleeTimer += arg) > FleeTimeout && !Common.Alarmed(Instance, Mathf.Max(1, Awareness - 1)))
+                .PermitIf(UpdateTrigger, State.Idle, (arg) => (m_fleeTimer += arg) > FleeTimeout && !Common.Alarmed(Instance, Mathf.Max(1, base.Awareness - 1)))
                 .OnEntry(t =>
                 {
                     Debug.Log($"{Instance.name} enter Flee state ");
