@@ -110,6 +110,7 @@ namespace RagnarsRokare.Factions
                 humanoid.EquipItem(item.GetComponent<ItemDrop>().m_itemData, false);
             }
             npc.GetComponent<Humanoid>().HideHandItems();
+            nview.GetZDO().Set(Constants.Z_trainedAssignments, "Npc");
         }
 
         private static string CreateNpcName()
