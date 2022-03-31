@@ -80,27 +80,7 @@ namespace RagnarsRokare.Factions
             }
         }
 
-        public int ComfortLevel
-        {
-            get
-            {
-                if (int.TryParse(NView.GetZDO()?.GetString(Misc.Constants.Z_ComfortLevel), out int result))
-                {
-                    return result;
-                }
-                return 0;
-            }
-            set
-            {
-                var zdo = NView.GetZDO();
-                if (zdo?.IsOwner() ?? false)
-                {
-                    Jotunn.Logger.LogDebug($"Set comfortlevel to {value}");
-                    zdo.Set(Misc.Constants.Z_ComfortLevel, value);
-                }
-            }
-        }
-
+        public int ComfortLevel {get; set;} = 0;
 
         /// <summary>
         /// Used by MobAILib.MobManager to find MobAIInfo
@@ -142,7 +122,8 @@ namespace RagnarsRokare.Factions
         {
             Brain.Configure(State.Root)
                 .InitialTransition(State.Idle)
-                .PermitIf(Trigger.TakeDamage, State.Fight, () => !Brain.IsInState(State.Flee) && !Brain.IsInState(State.Fight) && (TimeSinceHurt < 20.0f || Common.Alarmed(Instance, base.Mobility)));
+                .PermitIf(Trigger.TakeDamage, State.Fight, () => !Brain.IsInState(State.Flee) && !Brain.IsInState(State.Fight) && (TimeSinceHurt < 20.0f || Common.Alarmed(Instance, base.Mobility)) && ComfortLevel > 2)
+                .PermitIf(Trigger.TakeDamage, State.Flee, () => !Brain.IsInState(State.Flee) && !Brain.IsInState(State.Fight) && TimeSinceHurt < 20.0f && ComfortLevel > 0 && ComfortLevel <= 2);
         }
 
         private void ConfigureHungry()
@@ -159,10 +140,9 @@ namespace RagnarsRokare.Factions
         {
             Brain.Configure(State.Idle)
                 .SubstateOf(State.Root)
-                .PermitIf(Trigger.Hungry, eatingBehaviour.StartState, () => eatingBehaviour.IsHungry(IsHurt))
+                .PermitIf(Trigger.Hungry, eatingBehaviour.StartState, () => eatingBehaviour.IsHungry(IsHurt) && ComfortLevel > 1)
                 .OnEntry(t =>
                 {
-                    Debug.Log($"{Instance.name} enter Idle state ");
                     m_stuckInIdleTimer = 0;
                     UpdateAiStatus(State.Idle);
                 });
@@ -175,7 +155,6 @@ namespace RagnarsRokare.Factions
                 .Permit(Trigger.Fight, fightBehaviour.StartState)
                 .OnEntry(t =>
                 {
-                    Debug.Log($"{Instance.name} enter Fight state ");
                     fightBehaviour.SuccessState = State.Idle;
                     fightBehaviour.FailState = State.Flee;
                     fightBehaviour.MobilityLevel = base.Mobility;
@@ -222,7 +201,6 @@ namespace RagnarsRokare.Factions
                 .Permit(Trigger.SearchForItems, searchForItemsBehaviour.StartState)
                 .OnEntry(t =>
                 {
-                    Debug.Log($"{Instance.name} enter SearchForItems state ");
                     Common.Dbgl($"{Character.GetHoverName()}:ConfigureSearchContainers Initiated", true, "NPC");
                     searchForItemsBehaviour.KnownContainers = m_containers;
                     searchForItemsBehaviour.Items = t.Parameters[0] as IEnumerable<ItemDrop.ItemData>;
@@ -281,6 +259,13 @@ namespace RagnarsRokare.Factions
                 return;
             }
 
+            if (Brain.State == State.Idle && m_startPosition != null)
+            {
+                m_stuckInIdleTimer += dt;
+                Utils.Invoke<BaseAI>(Instance, "RandomMovement", dt, m_startPosition);
+                return;
+            }
+
         }
 
         private int CalculateComfortLevel()
@@ -291,8 +276,11 @@ namespace RagnarsRokare.Factions
 
             var bedGO = ZNetScene.instance.FindInstance(bedZDOId);
             if (!bedGO || !bedGO.GetComponent<ZNetView>().IsValid()) return -1; // Bed has no instance, can't calculate, keep old value
+            
+            m_startPosition = bedGO.transform.position;
 
             var bed = bedGO.GetComponent<Bed>();
+            
             var ownerNpcId = bed.GetOwner();
             if (ownerNpcId != NView.GetZDO().m_uid.id)
             {
