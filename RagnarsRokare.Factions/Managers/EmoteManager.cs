@@ -37,7 +37,7 @@ namespace RagnarsRokare.Factions
 			}
 		}
 
-		public static void UpdateEmote(ZNetView nview,ref string emoteState,ref int emoteID, Animator animator)
+		public static void UpdateEmote(ZNetView nview,ref string emoteState,ref int emoteID, ref Animator animator)
 		{
 			if (nview.IsOwner() && InEmote(emoteState, animator) && nview.gameObject.GetComponent<Character>().m_moveDir != Vector3.zero)
 			{

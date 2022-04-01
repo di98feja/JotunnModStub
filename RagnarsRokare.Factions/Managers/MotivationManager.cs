@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace RagnarsRokare.Factions.Managers
+namespace RagnarsRokare.Factions
 {
     internal static class MotivationManager
     {

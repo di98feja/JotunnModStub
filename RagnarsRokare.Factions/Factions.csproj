@@ -96,6 +96,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Behaviours\ApathyBehaviour.cs" />
     <Compile Include="Config\NpcAIConfig.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Factions.cs" />
@@ -110,6 +111,8 @@
     <Compile Include="NpcAI.cs" />
     <Compile Include="Patches\Bed_patch.cs" />
     <Compile Include="Patches\Character_patches.cs" />
+    <Compile Include="Patches\Humanoid_patches.cs" />
+    <Compile Include="Patches\HumanStub.cs" />
     <Compile Include="Patches\Tamable_patches.cs" />
     <Compile Include="Properties\IgnoreAccessModifiers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

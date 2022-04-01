@@ -16,14 +16,16 @@ namespace RagnarsRokare.Factions
         private float m_stuckInIdleTimer;
         private float m_calculateComfortTimer;
         private float m_fleeTimer;
+        private float m_dynamicBehaviourTimer;
 
         // Settings
         public float FleeTimeout { get; private set; } = 10f;
-
+        public float DynamicBehaviourTime { get; set; } = 20f;
         // Behaviours
         readonly EatingBehaviour eatingBehaviour;
         readonly SearchForItemsBehaviour searchForItemsBehaviour;
         readonly IFightBehaviour fightBehaviour;
+        private Queue<IDynamicBehaviour> m_dynamicBehaviours;
 
         // Triggers
         readonly StateMachine<string, string>.TriggerWithParameters<float> UpdateTrigger;
@@ -31,10 +33,10 @@ namespace RagnarsRokare.Factions
         private Vector3 m_startPosition;
         public MaxStack<Container> m_containers;
         readonly NpcAIConfig m_config;
+        private Animator m_animator;
 
         private string m_emoteState = "";
         private int m_emoteID;
-
         public const float CalculateComfortLevelInterval = 10f;
 
         public class State
@@ -47,6 +49,7 @@ namespace RagnarsRokare.Factions
             public const string SearchForItems = "SearchForItems";
             public const string Root = "Root";
             public const string Hungry = "Hungry";
+            public const string DynamicBehaviour = "DynamicBehaviour";
         }
 
         private class Trigger
@@ -57,6 +60,8 @@ namespace RagnarsRokare.Factions
             public const string SearchForItems = "SearchForItems";
             public const string Fight = "Fight";
             public const string Follow = "Follow";
+            public const string ChangeDynamicBehaviour = "ChangeDynamicBehaviour";
+            public const string StartDynamicBehaviour = "StartDynamicBehaviour";
         }
 
         public int HungerLevel
@@ -93,6 +98,12 @@ namespace RagnarsRokare.Factions
             UpdateTrigger = Brain.SetTriggerParameters<float>(Trigger.Update);
             m_containers = new MaxStack<Container>(Intelligence);
             m_config = config;
+            m_animator = Character.GetComponentInChildren<Animator>();
+            m_dynamicBehaviours = new Queue<IDynamicBehaviour>();
+            m_dynamicBehaviours.Enqueue(new ApathyBehaviour());
+            m_dynamicBehaviours.Peek().SuccessState = State.Idle;
+            m_dynamicBehaviours.Peek().FailState = State.Idle;
+            m_dynamicBehaviours.Peek().Configure(this, Brain, State.DynamicBehaviour);
 
             eatingBehaviour = new EatingBehaviour
             {
@@ -101,7 +112,7 @@ namespace RagnarsRokare.Factions
                 SuccessState = State.Idle,
                 FailState = State.Idle,
                 HealPercentageOnConsume = 0.2f
-            }; 
+            };
             eatingBehaviour.Configure(this, Brain, State.Hungry);
 
             searchForItemsBehaviour = new SearchForItemsBehaviour();
@@ -116,14 +127,15 @@ namespace RagnarsRokare.Factions
             ConfigureSearchForItems();
             ConfigureFight();
             ConfigureFlee();
+            ConfigureDynamicBehaviour();
         }
 
         private void ConfigureRoot()
         {
             Brain.Configure(State.Root)
                 .InitialTransition(State.Idle)
-                .PermitIf(Trigger.TakeDamage, State.Fight, () => !Brain.IsInState(State.Flee) && !Brain.IsInState(State.Fight) && (TimeSinceHurt < 20.0f || Common.Alarmed(Instance, base.Mobility)) && ComfortLevel > 2)
-                .PermitIf(Trigger.TakeDamage, State.Flee, () => !Brain.IsInState(State.Flee) && !Brain.IsInState(State.Fight) && TimeSinceHurt < 20.0f && ComfortLevel > 0 && ComfortLevel <= 2);
+                .PermitIf(Trigger.TakeDamage, State.Fight, () => !Brain.IsInState(State.Flee) && !Brain.IsInState(State.Fight) && (TimeSinceHurt < 20.0f || Common.Alarmed(Instance, base.Mobility)) && MotivationManager.CalculateMotivation(NView.GetZDO()) > 2)
+                .PermitIf(Trigger.TakeDamage, State.Flee, () => !Brain.IsInState(State.Flee) && !Brain.IsInState(State.Fight) && TimeSinceHurt < 20.0f && MotivationManager.CalculateMotivation(NView.GetZDO()) > 0 && MotivationManager.CalculateMotivation(NView.GetZDO()) <= 2);
         }
 
         private void ConfigureHungry()
@@ -140,12 +152,32 @@ namespace RagnarsRokare.Factions
         {
             Brain.Configure(State.Idle)
                 .SubstateOf(State.Root)
-                .PermitIf(Trigger.Hungry, eatingBehaviour.StartState, () => eatingBehaviour.IsHungry(IsHurt) && ComfortLevel > 1)
+                .Permit(Trigger.ChangeDynamicBehaviour, State.DynamicBehaviour)
+                .PermitIf(Trigger.Hungry, eatingBehaviour.StartState, () => eatingBehaviour.IsHungry(IsHurt) && MotivationManager.CalculateMotivation(NView.GetZDO()) > 1)
                 .OnEntry(t =>
                 {
                     m_stuckInIdleTimer = 0;
                     UpdateAiStatus(State.Idle);
                 });
+        }
+
+        private void ConfigureDynamicBehaviour()
+        {
+            Brain.Configure(State.DynamicBehaviour)
+                .SubstateOf(State.Idle)
+                .PermitDynamic(Trigger.StartDynamicBehaviour, () => m_dynamicBehaviours.Peek().StartState)
+                .PermitReentry(Trigger.ChangeDynamicBehaviour)
+                .OnEntry(t =>
+                {
+                    Jotunn.Logger.LogDebug("DynamicBehaviour.OnEntry()");
+                    Brain.Fire(Trigger.StartDynamicBehaviour);
+                });
+        }
+
+        private void NextDynamicBehaviour()
+        {
+            var newBehaviour = m_dynamicBehaviours.Dequeue();
+            m_dynamicBehaviours.Enqueue(newBehaviour);
         }
 
         private void ConfigureFight()
@@ -214,7 +246,7 @@ namespace RagnarsRokare.Factions
         public override void UpdateAI(float dt)
         {
             base.UpdateAI(dt);
-            EmoteManager.UpdateEmote(NView, ref m_emoteState, ref m_emoteID, Character.GetComponentInChildren<Animator>());
+            EmoteManager.UpdateEmote(NView, ref m_emoteState, ref m_emoteID, ref m_animator);
 
             m_triggerTimer += dt;
             if (m_triggerTimer < 0.1f) return;
@@ -228,7 +260,18 @@ namespace RagnarsRokare.Factions
             Brain.Fire(Trigger.Hungry);
             Brain.Fire(Trigger.TakeDamage);
             Brain.Fire(Trigger.Follow);
-            Brain.Fire(UpdateTrigger, dt);
+
+            if (Time.time > m_dynamicBehaviourTimer)
+            {
+                var oldBehaviour = m_dynamicBehaviours.Peek();
+                oldBehaviour.Abort();
+                NextDynamicBehaviour();
+                var newBehaviour = m_dynamicBehaviours.Peek();
+                Jotunn.Logger.LogDebug($"{Character.m_name}: Swithing from behaviour {oldBehaviour} to {newBehaviour}");
+                m_dynamicBehaviourTimer = Time.time + DynamicBehaviourTime;
+                Brain.Fire(Trigger.ChangeDynamicBehaviour);
+                return;
+            }
 
             if (Time.time > m_calculateComfortTimer)
             {
@@ -238,6 +281,11 @@ namespace RagnarsRokare.Factions
                     ComfortLevel = cl;
                 }
                 m_calculateComfortTimer = Time.time + CalculateComfortLevelInterval;
+            }
+
+            if (Brain.IsInState(State.DynamicBehaviour))
+            {
+                m_dynamicBehaviours.Peek().Update(this, dt);
             }
 
             if (Brain.IsInState(State.SearchForItems))
@@ -288,7 +336,6 @@ namespace RagnarsRokare.Factions
                 NView.GetZDO().Set(Misc.Constants.Z_NpcBedOwnerId, ZDOID.None);
                 return 0;
             }
-
             Cover.GetCoverForPoint(bed.transform.position, out var coverPercentage, out var underRoof);
             if (!underRoof) return 1; // Have beed but no roof
 
@@ -297,7 +344,7 @@ namespace RagnarsRokare.Factions
                 return 2; // Have roof but no fire
             }
 
-            return Helpers.GetComfortFromNearbyPieces(bed.transform.position) + 2; 
+            return Helpers.GetComfortFromNearbyPieces(bed.transform.position) + 2;
         }
 
         public override void Follow(Player player)
@@ -327,7 +374,7 @@ namespace RagnarsRokare.Factions
 
         protected override void RPC_MobCommand(long sender, ZDOID playerId, string command)
         {
-            
+
         }
     }
 }

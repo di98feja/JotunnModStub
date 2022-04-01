@@ -15,6 +15,7 @@ namespace RagnarsRokare.Factions
         public static void InitRPCs()
         {
             //ZRoutedRpc.instance.Register<ZPackage>(Constants.Z_RegisteredMobsChangedEvent, RegisteredMobsChangedEvent_RPC);
+
         }
 
         internal static void RegisteredMobsChangedEvent_RPC(long sender, ZPackage pkg)
@@ -43,6 +44,10 @@ namespace RagnarsRokare.Factions
             m_npcPrefab = embeddedResourceBundle.LoadAsset<GameObject>("Assets/PrefabInstance/NPC.prefab");
             Jotunn.Logger.LogInfo($"Embedded resources: {string.Join(",", typeof(Factions).Assembly.GetManifestResourceNames())}");
             PrefabManager.Instance.AddPrefab(m_npcPrefab);
+
+            var human = m_npcPrefab.AddComponent<Human>();
+            var humanoid = m_npcPrefab.GetComponent<Humanoid>();
+            
 
             embeddedResourceBundle.Unload(false);
         }
