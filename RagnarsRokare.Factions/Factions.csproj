@@ -78,6 +78,10 @@
     <Reference Include="RagnarsRokare.Common">
       <HintPath>..\libraries\RagnarsRokare.Common.dll</HintPath>
     </Reference>
+    <Reference Include="RagnarsRokare.HumanStub, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\HumanStub\bin\Debug\RagnarsRokare.HumanStub.dll</HintPath>
+    </Reference>
     <Reference Include="RagnarsRokare.MobAILib">
       <HintPath>..\libraries\RagnarsRokare.MobAILib.dll</HintPath>
     </Reference>
@@ -111,16 +115,14 @@
     <Compile Include="NpcAI.cs" />
     <Compile Include="Patches\Bed_patch.cs" />
     <Compile Include="Patches\Character_patches.cs" />
-    <Compile Include="Patches\Humanoid_patches.cs" />
-    <Compile Include="Patches\HumanStub.cs" />
     <Compile Include="Patches\Tamable_patches.cs" />
     <Compile Include="Properties\IgnoreAccessModifiers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <EmbeddedResource Include="AssetBundles\npc" />
     <EmbeddedResource Include="AssetBundles\npcbed" />
+    <EmbeddedResource Include="AssetBundles\npc" />
     <None Include="packages.config" />
     <None Include="README.md" />
   </ItemGroup>

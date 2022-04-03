@@ -1,4 +1,5 @@
-﻿using Jotunn.Entities;
+﻿using Jotunn;
+using Jotunn.Entities;
 using Jotunn.Managers;
 using Jotunn.Utils;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ namespace RagnarsRokare.Factions
 {
     internal static class NpcManager
     {
-        private static GameObject m_npcPrefab;
+        //private static GameObject m_npcPrefab;
         private static readonly System.Random m_random = new System.Random();
         private static List<ZDOID> m_allNpcZDOIDs = new List<ZDOID>();
 
@@ -41,12 +42,21 @@ namespace RagnarsRokare.Factions
         public static void LoadAssets()
         {
             var embeddedResourceBundle = AssetUtils.LoadAssetBundleFromResources("npc", typeof(Factions).Assembly);
-            m_npcPrefab = embeddedResourceBundle.LoadAsset<GameObject>("Assets/PrefabInstance/NPC.prefab");
+            var npcPrefab = embeddedResourceBundle.LoadAsset<GameObject>("Assets/NPC/NPC.prefab");
+            //npcPrefab.FixReferences(true);
             Jotunn.Logger.LogInfo($"Embedded resources: {string.Join(",", typeof(Factions).Assembly.GetManifestResourceNames())}");
-            PrefabManager.Instance.AddPrefab(m_npcPrefab);
+            var npcCutstomCreature = new CustomCreature(npcPrefab, true, new Jotunn.Configs.CreatureConfig
+            {
+                Name = "NPC"
+            });
+            CreatureManager.Instance.AddCreature(npcCutstomCreature);
 
-            var human = m_npcPrefab.AddComponent<Human>();
-            var humanoid = m_npcPrefab.GetComponent<Humanoid>();
+            //var npcCustomPrefab = new CustomPrefab(npcPrefab, fixReference:true);
+            //npcPrefab.name = "NPC";
+            //PrefabManager.Instance.AddPrefab(npcCustomPrefab);
+            //m_npcPrefab = CreatureManager.Instance.GetCreaturePrefab("NPC");
+   //         var human = m_npcPrefab.AddComponent<HumanStub>();
+            //var humanoid = m_npcPrefab.GetComponent<Humanoid>();
             
 
             embeddedResourceBundle.Unload(false);
@@ -66,14 +76,14 @@ namespace RagnarsRokare.Factions
 
         public static GameObject CreateRandomizedNpc(Transform parent, Vector3 localPosition)
         {
-            var npc = UnityEngine.Object.Instantiate(m_npcPrefab, parent);
+            var npc = UnityEngine.Object.Instantiate(CreatureManager.Instance.GetCreaturePrefab("NPC"), parent);
             npc.transform.localPosition = localPosition;
             return npc;
         }
 
         public static GameObject CreateRandomizedNpc(Vector3 position)
         {
-            var npc = UnityEngine.Object.Instantiate(m_npcPrefab, position, Quaternion.LookRotation(Vector3.forward));
+            var npc = UnityEngine.Object.Instantiate(CreatureManager.Instance.GetCreaturePrefab("NPC"), position, Quaternion.LookRotation(Vector3.forward));
             //InitNpc(npc);
             return npc;
         }

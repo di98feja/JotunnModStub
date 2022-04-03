@@ -5,7 +5,7 @@ VisualStudioVersion = 17.1.32228.430
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Factions", "RagnarsRokare.Factions\Factions.csproj", "{DEAF4438-8089-40ED-8175-398E1261D45B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{D877A46B-0D49-4E6F-915A-C30E06E2F923}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests", "UnitTests\UnitTests.csproj", "{D877A46B-0D49-4E6F-915A-C30E06E2F923}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
