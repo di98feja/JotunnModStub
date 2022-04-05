@@ -9,9 +9,9 @@ namespace RagnarsRokare.Factions
 {
     internal static class MotivationManager
     {
-        internal static float CalculateMotivation(ZDO zdo)
+        internal static float CalculateMotivation(ZDO zdo, int confortLevel)
         {
-            float sum = 0f;
+            float sum = 0f + confortLevel;
 
             return Math.Max(sum, 0f);
         }
