@@ -382,5 +382,24 @@ namespace RagnarsRokare.Factions
         {
 
         }
+
+        private void UpdateDynamicBehaviours()
+        {
+            m_dynamicBehaviours = new Queue<IDynamicBehaviour>();
+            //if (MotivationManager.CalculateMotivation(NView.GetZDO()) < 3)
+            //{
+            //    m_dynamicBehaviours.Enqueue(new ApathyBehaviour());
+            //    m_dynamicBehaviours.Peek().SuccessState = State.Idle;
+            //    m_dynamicBehaviours.Peek().FailState = State.Idle;
+            //    m_dynamicBehaviours.Peek().Configure(this, Brain, State.DynamicBehaviour);
+            //}
+            if (MotivationManager.CalculateMotivation(NView.GetZDO()) < 5)
+            {
+                m_dynamicBehaviours.Enqueue(new HopelessBehaviour());
+                m_dynamicBehaviours.Peek().SuccessState = State.Idle;
+                m_dynamicBehaviours.Peek().FailState = State.Idle;
+                m_dynamicBehaviours.Peek().Configure(this, Brain, State.DynamicBehaviour);
+            }
+        }
     }
 }
