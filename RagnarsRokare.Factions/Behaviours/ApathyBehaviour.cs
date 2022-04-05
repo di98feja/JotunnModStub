@@ -71,8 +71,7 @@ namespace RagnarsRokare.Factions
                         SayRandomThing(aiBase.Character);
                     }
                     _currentStateTimeout = Time.time + StateTimeout;
-                    aiBase.Character.GetComponentInChildren<Animator>().SetTrigger("Laydown");
-                    //EmoteManager.StartEmote(aiBase.NView, EmoteManager.Emotes.Sit, false);
+                    EmoteManager.StartEmote(aiBase.NView, EmoteManager.Emotes.Sit, false);
                 })
                 .OnExit(t =>
                 {
@@ -127,6 +126,7 @@ namespace RagnarsRokare.Factions
                 if (Time.time > _currentStateTimeout)
                 {
                     instance.Brain.Fire(Trigger.SitDown);
+                    return;
                 }
                 instance.MoveAndAvoidFire(m_targetPosition, dt, 0f);
                 return;

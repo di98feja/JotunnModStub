@@ -86,6 +86,10 @@ namespace RagnarsRokare.Factions
         }
 
         public int ComfortLevel {get; set;} = 0;
+        public bool HasBed()
+        {
+            return NView.GetZDO().GetZDOID(Misc.Constants.Z_NpcBedOwnerId) != ZDOID.None;
+        }
 
         /// <summary>
         /// Used by MobAILib.MobManager to find MobAIInfo
@@ -100,14 +104,16 @@ namespace RagnarsRokare.Factions
             m_config = config;
             m_animator = Character.GetComponentInChildren<Animator>();
             m_dynamicBehaviours = new Queue<IDynamicBehaviour>();
-            m_dynamicBehaviours.Enqueue(new ApathyBehaviour());
+            var behaviour = new SleepBehaviour();
+            m_dynamicBehaviours.Enqueue(behaviour);
             m_dynamicBehaviours.Peek().SuccessState = State.Idle;
             m_dynamicBehaviours.Peek().FailState = State.Idle;
             m_dynamicBehaviours.Peek().Configure(this, Brain, State.DynamicBehaviour);
+            behaviour.SleepTime = 10f;
 
             eatingBehaviour = new EatingBehaviour
             {
-                HungryTimeout = 10f,
+                HungryTimeout = 60f,
                 SearchForItemsState = State.SearchForItems,
                 SuccessState = State.Idle,
                 FailState = State.Idle,

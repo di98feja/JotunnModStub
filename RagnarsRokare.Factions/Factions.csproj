@@ -101,6 +101,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Behaviours\ApathyBehaviour.cs" />
+    <Compile Include="Behaviours\SleepBehaviour.cs" />
     <Compile Include="Config\NpcAIConfig.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Factions.cs" />
