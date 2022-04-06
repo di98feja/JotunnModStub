@@ -17,26 +17,20 @@ namespace RagnarsRokare.Factions
         private string m_attachAnimation;
         private Collider[] m_attachColliders;
 		
-		private sealed class State
+		private StateDef State { get; set; }
+
+		private sealed class StateDef
 		{
+			private readonly string prefix;
 
-			private readonly string name;
-			private readonly int value;
+			public string Main { get { return $"{prefix}Main"; } }
+			public string WalkingToBed { get { return $"{prefix}WalkingToBed"; } }
+			public string Sleeping { get { return $"{prefix}Sleeping"; } }
 
-			public static readonly State Main = new State("Main");
-			public static readonly State WalkingToBed = new State("WalkingToBed");
-			public static readonly State Sleeping = new State("Sleeping");
-
-			private State(string name)
+			public StateDef(string prefix)
 			{
-				this.name = name;
+				this.prefix = prefix;
 			}
-
-			public string ToString(string prefix)
-			{
-				return prefix + name;
-			}
-
 		}
         private class Trigger
         {
@@ -48,7 +42,7 @@ namespace RagnarsRokare.Factions
         }
 
 		// Settings
-		public string StartState => State.Main.ToString(Prefix);
+		public string StartState => State.Main;
         public string SuccessState { get; set; }
         public string FailState { get; set; }
         public float SleepTime { get; set; }
@@ -59,10 +53,11 @@ namespace RagnarsRokare.Factions
 
         public void Configure(MobAIBase aiBase, StateMachine<string, string> brain, string parentState)
         {
+			State = new StateDef(Prefix);
             m_zanim = aiBase.Instance.GetComponent<ZSyncAnimation>();
 
-            brain.Configure(State.Main.ToString())
-               .InitialTransition(State.WalkingToBed.ToString(Prefix))
+            brain.Configure(State.Main)
+               .InitialTransition(State.WalkingToBed)
                .SubstateOf(parentState)
                .PermitDynamic(Trigger.Abort, () => FailState)
                .OnEntry(t =>
@@ -71,9 +66,9 @@ namespace RagnarsRokare.Factions
                    Common.Dbgl("Entered SleepBehaviour", true, "NPC");
                });
 
-            brain.Configure(State.WalkingToBed.ToString(Prefix))
-                .SubstateOf(State.Main.ToString(Prefix))
-                .Permit(Trigger.LieDown, State.Sleeping.ToString(Prefix))
+            brain.Configure(State.WalkingToBed)
+                .SubstateOf(State.Main)
+                .Permit(Trigger.LieDown, State.Sleeping)
                 .OnEntry(t =>
                 {
                     m_targetPosition = aiBase.HomePosition;
@@ -82,8 +77,8 @@ namespace RagnarsRokare.Factions
                 {
                 });
 
-            brain.Configure(State.Sleeping.ToString(Prefix))
-                .SubstateOf(State.Main.ToString(Prefix))
+            brain.Configure(State.Sleeping)
+                .SubstateOf(State.Main)
                 .Permit(Trigger.StandUp, SuccessState)
                 .OnEntry(t =>
                 {
@@ -112,7 +107,7 @@ namespace RagnarsRokare.Factions
 
         public void Update(MobAIBase aiBase, float dt)
         {
-            if (aiBase.Brain.IsInState(State.WalkingToBed.ToString(Prefix)))
+            if (aiBase.Brain.IsInState(State.WalkingToBed))
             {
                 if (aiBase.MoveAndAvoidFire(m_targetPosition, dt, 1.5f))
                 {
@@ -120,7 +115,7 @@ namespace RagnarsRokare.Factions
                 }
                 return;
             }
-            if (aiBase.Brain.IsInState(State.Sleeping.ToString(Prefix)))
+            if (aiBase.Brain.IsInState(State.Sleeping))
             {
                 if (Time.time > m_sleepTimer)
                 {
