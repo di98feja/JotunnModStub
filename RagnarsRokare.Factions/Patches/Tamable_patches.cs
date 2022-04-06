@@ -60,6 +60,7 @@ namespace RagnarsRokare.Factions.Patches
                     var npcZdo = ___m_nview.GetZDO();
                     var playerFactionId = user.m_nview.GetZDO().GetString(Misc.Constants.Z_Faction);
                     var standing = StandingsManager.GetStandingTowards(npcZdo, playerFactionId);
+                    InteractionManager.TogglePanel(___m_character);
                     if (standing <= Misc.Constants.KnownStanding)
                     {
                         var npcAi = MobAI.MobManager.AliveMobs[npcZdo.GetString(Constants.Z_UniqueId)] as NpcAI;

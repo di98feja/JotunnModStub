@@ -1,6 +1,5 @@
 ﻿using RagnarsRokare.MobAI;
 using Stateless;
-using System;
 using UnityEngine;
 
 namespace RagnarsRokare.Factions
@@ -17,14 +16,28 @@ namespace RagnarsRokare.Factions
         private Vector3 m_detachOffset;
         private string m_attachAnimation;
         private Collider[] m_attachColliders;
+		
+		private sealed class State
+		{
 
-        private class State
-        {
-            public const string Main = Prefix + "Main";
-            public const string WalkingToBed = Prefix + "WalkingToBed";
-            public const string Sleeping = Prefix + "Sleeping";
-            public const string GettingOutOfBed = Prefix + "GettingOutOfBed";
-        }
+			private readonly string name;
+			private readonly int value;
+
+			public static readonly State Main = new State("Main");
+			public static readonly State WalkingToBed = new State("WalkingToBed");
+			public static readonly State Sleeping = new State("Sleeping");
+
+			private State(string name)
+			{
+				this.name = name;
+			}
+
+			public string ToString(string prefix)
+			{
+				return prefix + name;
+			}
+
+		}
         private class Trigger
         {
             public const string Abort = Prefix + "Abort";
@@ -34,8 +47,8 @@ namespace RagnarsRokare.Factions
             public const string StandUp = Prefix + "StandUp";
         }
 
-        // Settings
-        public string StartState => State.Main;
+		// Settings
+		public string StartState => State.Main.ToString(Prefix);
         public string SuccessState { get; set; }
         public string FailState { get; set; }
         public float SleepTime { get; set; }
@@ -48,8 +61,8 @@ namespace RagnarsRokare.Factions
         {
             m_zanim = aiBase.Instance.GetComponent<ZSyncAnimation>();
 
-            brain.Configure(State.Main)
-               .InitialTransition(State.WalkingToBed)
+            brain.Configure(State.Main.ToString())
+               .InitialTransition(State.WalkingToBed.ToString(Prefix))
                .SubstateOf(parentState)
                .PermitDynamic(Trigger.Abort, () => FailState)
                .OnEntry(t =>
@@ -58,9 +71,9 @@ namespace RagnarsRokare.Factions
                    Common.Dbgl("Entered SleepBehaviour", true, "NPC");
                });
 
-            brain.Configure(State.WalkingToBed)
-                .SubstateOf(State.Main)
-                .Permit(Trigger.LieDown, State.Sleeping)
+            brain.Configure(State.WalkingToBed.ToString(Prefix))
+                .SubstateOf(State.Main.ToString(Prefix))
+                .Permit(Trigger.LieDown, State.Sleeping.ToString(Prefix))
                 .OnEntry(t =>
                 {
                     m_targetPosition = aiBase.HomePosition;
@@ -69,8 +82,8 @@ namespace RagnarsRokare.Factions
                 {
                 });
 
-            brain.Configure(State.Sleeping)
-                .SubstateOf(State.Main)
+            brain.Configure(State.Sleeping.ToString(Prefix))
+                .SubstateOf(State.Main.ToString(Prefix))
                 .Permit(Trigger.StandUp, SuccessState)
                 .OnEntry(t =>
                 {
@@ -84,7 +97,8 @@ namespace RagnarsRokare.Factions
 					}
 					m_sleepTimer = Time.time + SleepTime;
 					var bedGO = ZNetScene.instance.FindInstance(bedZDOId);
-					AttachStart(aiBase, bedGO.transform, bedGO, hideWeapons: true, isBed: true, onShip: false, "attach_bed", new Vector3(0f, 0.5f, 0f));
+
+					AttachStart(aiBase, bedGO.transform, bedGO, hideWeapons: true, isBed: true, onShip: false, "attach_bed", new Vector3(0f, 0.1f, 0f));
 
 				})
                 .OnExit(t =>
@@ -98,7 +112,7 @@ namespace RagnarsRokare.Factions
 
         public void Update(MobAIBase aiBase, float dt)
         {
-            if (aiBase.Brain.IsInState(State.WalkingToBed))
+            if (aiBase.Brain.IsInState(State.WalkingToBed.ToString(Prefix)))
             {
                 if (aiBase.MoveAndAvoidFire(m_targetPosition, dt, 1.5f))
                 {
@@ -106,7 +120,7 @@ namespace RagnarsRokare.Factions
                 }
                 return;
             }
-            if (aiBase.Brain.IsInState(State.Sleeping))
+            if (aiBase.Brain.IsInState(State.Sleeping.ToString(Prefix)))
             {
                 if (Time.time > m_sleepTimer)
                 {
