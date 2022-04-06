@@ -25,7 +25,8 @@ namespace RagnarsRokare.Factions
         readonly EatingBehaviour eatingBehaviour;
         readonly SearchForItemsBehaviour searchForItemsBehaviour;
         readonly IFightBehaviour fightBehaviour;
-        private Queue<IDynamicBehaviour> m_dynamicBehaviours;
+        private IDynamicBehaviour m_dynamicBehaviour, m_apathyBehaviour, m_hopelessBehaviour, m_sleepBehaviour;
+
 
         // Triggers
         readonly StateMachine<string, string>.TriggerWithParameters<float> UpdateTrigger;
@@ -38,7 +39,6 @@ namespace RagnarsRokare.Factions
         private string m_emoteState = "";
         private int m_emoteID;
         public const float CalculateComfortLevelInterval = 10f;
-        public float m_lastMotivation;
 
         public class State
         {
@@ -87,7 +87,9 @@ namespace RagnarsRokare.Factions
         }
 
         public int ComfortLevel {get; set;} = 0;
-        
+
+        public float MotivationLevel { get; set; } = 0;
+
 
         public bool HasBed()
         {
@@ -106,7 +108,21 @@ namespace RagnarsRokare.Factions
             m_containers = new MaxStack<Container>(Intelligence);
             m_config = config;
             m_animator = Character.GetComponentInChildren<Animator>();
-            
+
+            m_apathyBehaviour = new ApathyBehaviour();
+            m_apathyBehaviour.SuccessState = State.Idle;
+            m_apathyBehaviour.FailState = State.Idle;
+            m_apathyBehaviour.Configure(this, Brain, State.DynamicBehaviour);
+
+            m_hopelessBehaviour = new HopelessBehaviour();
+            m_hopelessBehaviour.SuccessState = State.Idle;
+            m_hopelessBehaviour.FailState = State.Idle;
+            m_hopelessBehaviour.Configure(this, Brain, State.DynamicBehaviour);
+
+            m_sleepBehaviour = new SleepBehaviour();
+            m_sleepBehaviour.SuccessState = State.Idle;
+            m_sleepBehaviour.FailState = State.Idle;
+            m_sleepBehaviour.Configure(this, Brain, State.DynamicBehaviour);
 
             eatingBehaviour = new EatingBehaviour
             {
@@ -123,8 +139,6 @@ namespace RagnarsRokare.Factions
             fightBehaviour = Activator.CreateInstance(FightingBehaviourSelector.Invoke(this)) as IFightBehaviour;
             fightBehaviour.Configure(this, Brain, State.Fight);
 
-            UpdateDynamicBehaviours();
-
             ConfigureRoot();
             ConfigureHungry();
             ConfigureIdle();
@@ -139,7 +153,8 @@ namespace RagnarsRokare.Factions
             Brain.Configure(State.Root)
                 .InitialTransition(State.Idle)
                 .PermitIf(Trigger.TakeDamage, State.Fight, () => !Brain.IsInState(State.Flee) && !Brain.IsInState(State.Fight) && (TimeSinceHurt < 20.0f || Common.Alarmed(Instance, base.Mobility)) && MotivationManager.CalculateMotivation(NView.GetZDO(), ComfortLevel) > 2)
-                .PermitIf(Trigger.TakeDamage, State.Flee, () => !Brain.IsInState(State.Flee) && !Brain.IsInState(State.Fight) && TimeSinceHurt < 20.0f && MotivationManager.CalculateMotivation(NView.GetZDO(), ComfortLevel) > 0 && MotivationManager.CalculateMotivation(NView.GetZDO(), ComfortLevel) <= 2);
+                .PermitIf(Trigger.TakeDamage, State.Flee, () => !Brain.IsInState(State.Flee) && !Brain.IsInState(State.Fight) && TimeSinceHurt < 20.0f && MotivationManager.CalculateMotivation(NView.GetZDO(), ComfortLevel) > 0 && MotivationManager.CalculateMotivation(NView.GetZDO(), ComfortLevel) <= 2)
+                .PermitIf(Trigger.ChangeDynamicBehaviour, State.DynamicBehaviour, () => !Brain.IsInState(State.DynamicBehaviour));
         }
 
         private void ConfigureHungry()
@@ -169,7 +184,7 @@ namespace RagnarsRokare.Factions
         {
             Brain.Configure(State.DynamicBehaviour)
                 .SubstateOf(State.Idle)
-                .PermitDynamic(Trigger.StartDynamicBehaviour, () => m_dynamicBehaviours.Peek().StartState)
+                .PermitDynamic(Trigger.StartDynamicBehaviour, () => m_dynamicBehaviour.StartState)
                 .PermitReentry(Trigger.ChangeDynamicBehaviour)
                 .OnEntry(t =>
                 {
@@ -180,8 +195,30 @@ namespace RagnarsRokare.Factions
 
         private void NextDynamicBehaviour()
         {
-            var newBehaviour = m_dynamicBehaviours.Dequeue();
-            m_dynamicBehaviours.Enqueue(newBehaviour);
+            if (m_dynamicBehaviour != null)
+            {
+                var oldBehaviour = m_dynamicBehaviour;
+                Jotunn.Logger.LogDebug($"{Character.m_name}: Swithing from {oldBehaviour}");
+                m_dynamicBehaviour.Abort();
+            }
+            
+            if (MotivationLevel < 1)
+            {
+                m_dynamicBehaviour = m_apathyBehaviour;               
+            }
+            else if (MotivationLevel > 0 && MotivationLevel < 2)
+            {
+                m_dynamicBehaviour = m_hopelessBehaviour;
+            }
+            else if (MotivationLevel > 1)
+            {
+                m_dynamicBehaviour = m_sleepBehaviour;
+            }
+            var newBehaviour = m_dynamicBehaviour;
+            Jotunn.Logger.LogDebug($"{Character.m_name}: Swithing to {newBehaviour}");
+            m_dynamicBehaviourTimer = Time.time + DynamicBehaviourTime;
+            Brain.Fire(Trigger.ChangeDynamicBehaviour);
+            return;
         }
 
         private void ConfigureFight()
@@ -267,14 +304,7 @@ namespace RagnarsRokare.Factions
 
             if (Time.time > m_dynamicBehaviourTimer)
             {
-                var oldBehaviour = m_dynamicBehaviours.Peek();
-                oldBehaviour.Abort();
                 NextDynamicBehaviour();
-                var newBehaviour = m_dynamicBehaviours.Peek();
-                Jotunn.Logger.LogDebug($"{Character.m_name}: Swithing from behaviour {oldBehaviour} to {newBehaviour}");
-                m_dynamicBehaviourTimer = Time.time + DynamicBehaviourTime;
-                Brain.Fire(Trigger.ChangeDynamicBehaviour);
-                return;
             }
 
             if (Time.time > m_calculateComfortTimer)
@@ -287,16 +317,16 @@ namespace RagnarsRokare.Factions
                 m_calculateComfortTimer = Time.time + CalculateComfortLevelInterval;
                 var motivation = MotivationManager.CalculateMotivation(NView.GetZDO(), ComfortLevel);
                 Debug.Log($"Motivation = {motivation} ");
-                if (m_lastMotivation != motivation)
+                if (MotivationLevel != motivation)
                 {
-                    m_lastMotivation = motivation;
-                    UpdateDynamicBehaviours();
+                    MotivationLevel = motivation;
+                    NextDynamicBehaviour();
                 }
             }
 
             if (Brain.IsInState(State.DynamicBehaviour))
             {
-                m_dynamicBehaviours.Peek().Update(this, dt);
+                m_dynamicBehaviour.Update(this, dt);
             }
 
             if (Brain.IsInState(State.SearchForItems))
@@ -386,37 +416,6 @@ namespace RagnarsRokare.Factions
         protected override void RPC_MobCommand(long sender, ZDOID playerId, string command)
         {
 
-        }
-
-        private void UpdateDynamicBehaviours()
-        {
-            var motivation = MotivationManager.CalculateMotivation(NView.GetZDO(), ComfortLevel);
-            m_dynamicBehaviours = new Queue<IDynamicBehaviour>();
-            if (motivation < 1)
-            {
-                var newBehaviour = new ApathyBehaviour();
-                newBehaviour.SuccessState = State.Idle;
-                newBehaviour.FailState = State.Idle;
-                newBehaviour.Configure(this, Brain, State.DynamicBehaviour);
-                m_dynamicBehaviours.Enqueue(newBehaviour);
-            }
-            if (motivation > 0)
-            {
-                var newBehaviour = new HopelessBehaviour();
-                newBehaviour.SuccessState = State.Idle;
-                newBehaviour.FailState = State.Idle;
-                newBehaviour.Configure(this, Brain, State.DynamicBehaviour);
-                m_dynamicBehaviours.Enqueue(newBehaviour);
-            }
-            if (motivation > 1)
-            {
-                var behaviour = new SleepBehaviour();
-                behaviour.SuccessState = State.Idle;
-                behaviour.FailState = State.Idle;
-                behaviour.Configure(this, Brain, State.DynamicBehaviour);
-                behaviour.SleepTime = 10f;
-                m_dynamicBehaviours.Enqueue(behaviour);
-            }
         }
     }
 }
