@@ -44,6 +44,7 @@ namespace RagnarsRokare.Factions
             On.FejdStartup.Awake += FejdStartup_Awake;
             On.ZRoutedRpc.ctor += InitRPCs;
             On.Bed.Awake += Bed_patch.Bed_Awake;
+            On.ObjectDB.Awake += ObjectDB_Awake;
 
             On.Player.OnSpawned += Player_OnSpawned;
             // Jotunn comes with its own Logger class to provide a consistent Log style for all mods using it
@@ -51,6 +52,12 @@ namespace RagnarsRokare.Factions
 
             // To learn more about Jotunn's features, go to
             // https://valheim-modding.github.io/Jotunn/tutorials/overview.html
+        }
+
+        private void ObjectDB_Awake(On.ObjectDB.orig_Awake orig, ObjectDB self)
+        {
+            orig(self);
+            ErrandsManager.Init();
         }
 
         private void Player_OnSpawned(On.Player.orig_OnSpawned orig, Player self)

@@ -23,7 +23,7 @@ namespace RagnarsRokare.Factions
             }
             else
             {
-                return Misc.Constants.NeutralStanding;
+                return Misc.Constants.Standing_Suspicious;
             }
         }
 
@@ -37,18 +37,24 @@ namespace RagnarsRokare.Factions
             if (zdo?.IsOwner() != true) return;
             if (string.IsNullOrEmpty(factionId)) return;
 
-            Mathf.Clamp(standing, Misc.Constants.MinStanding, Misc.Constants.MaxStanding);
+            Mathf.Clamp(standing, Misc.Constants.Standing_Minimum, Misc.Constants.Standing_Max);
             var allStandings = GetStandings(zdo.GetString(Misc.Constants.Z_FactionStandings));
             var factionStanding = allStandings.SingleOrDefault(s => s.Item1 == factionId.ToString());
             if (factionStanding == default)
             {
-                allStandings.Append<(string, float)>((factionId.ToString(), standing));
+                allStandings = allStandings.Append<(string, float)>((factionId.ToString(), standing));
             }
             else
             {
                 factionStanding.Item2 = standing;
             }
+            string newFactionString = string.Join("|", allStandings.Select(s => $"{s.Item1};{s.Item2.ToString(CultureInfo.InvariantCulture)}"));
             zdo.Set(Misc.Constants.Z_FactionStandings, string.Join("|", allStandings.Select(s => $"{s.Item1};{s.Item2.ToString(CultureInfo.InvariantCulture)}")));
+        }
+
+        internal static void IncreaseStandingTowards(ZDO npcZdo, Faction faction, float standingIncrease)
+        {
+            SetStandingTowards(npcZdo, faction, GetStandingTowards(npcZdo, faction) + standingIncrease);
         }
 
         internal static IEnumerable<(string, float)> GetStandings(string standingsString)
@@ -59,6 +65,5 @@ namespace RagnarsRokare.Factions
             }
             
         }
-
     }
 }
