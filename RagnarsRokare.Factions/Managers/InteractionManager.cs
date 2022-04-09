@@ -107,7 +107,7 @@ namespace RagnarsRokare.Factions
                 npcText = Localization.instance.Localize(errand.RequestString);
                 responses.Add(new Response
                 {
-                    Text = "Alright, consider it done",
+                    Text = Localization.instance.Localize($"Alright, consider it done. (Bring {errand.RequestItemAmount} {errand.RequestItem.m_shared.m_name})"),
                     Callback = () =>
                     {
                         InteractionPanel.SetActive(false);
@@ -199,7 +199,7 @@ namespace RagnarsRokare.Factions
                 outline: false,
                 outlineColor: Color.black,
                 width: 800f,
-                height: 40f,
+                height: 60f,
                 addContentSizeFitter: false);
 
             float buttonYPos = 60f;

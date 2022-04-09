@@ -12,7 +12,7 @@
                     var npc = NpcManager.CreateRandomizedNpc(self.transform.position);
                     npc.SetActive(false);
                     var npcZdo = npc.GetComponent<ZNetView>().GetZDO();
-                    self.SetOwner(npcZdo.m_uid.id, npc.GetComponent<Tameable>().GetHoverName());
+                    self.SetOwner((long)npcZdo.m_uid.id, npc.GetComponent<Tameable>().GetHoverName());
                     npcZdo.Set(Misc.Constants.Z_NpcBedOwnerId, self.m_nview.GetZDO().m_uid);
                     npcZdo.Set(Constants.Z_SavedHomePosition, self.transform.position);
                 }

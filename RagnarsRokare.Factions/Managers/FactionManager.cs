@@ -48,7 +48,8 @@ namespace RagnarsRokare.Factions
             var playerFactionId = playerZdo.GetString(Misc.Constants.Z_Faction);
             if (string.IsNullOrEmpty(playerFactionId))
             {
-                SetPlayerFaction(player, Factions.Values.FirstOrDefault(f => f.Name == "Test").FactionId);
+                playerFactionId = Factions.Values.FirstOrDefault(f => f.Name == "Test").FactionId;
+                SetPlayerFaction(player, playerFactionId);
             }
             return GetFaction(playerFactionId);
         }

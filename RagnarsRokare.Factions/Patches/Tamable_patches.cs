@@ -54,7 +54,7 @@ namespace RagnarsRokare.Factions.Patches
                 if (___m_character.IsTamed())
                 {
                     var npcZdo = ___m_nview.GetZDO();
-                    var playerFactionId = user.m_nview.GetZDO().GetString(Misc.Constants.Z_Faction);
+                    var playerFactionId = FactionManager.GetPlayerFaction((user as Player));
                     var standing = StandingsManager.GetStandingTowards(npcZdo, playerFactionId);
                     if (standing <= Misc.Constants.Standing_Minimum)
                     {

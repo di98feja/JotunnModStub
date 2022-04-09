@@ -33,7 +33,7 @@ namespace RagnarsRokare.Factions
                 new Errand
                 {
                     Id = 1,
-                    RequestString = $"I long for some juicy meat, could you bring me some $item_necktailgrilled ?",
+                    RequestString = $"I long for some tender meat, could you bring me some $item_necktailgrilled ?",
                     RequestItem = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Consumable, "NeckTailGrilled").FirstOrDefault()?.m_itemData,
                     RequestItemAmount = 2,
                     CompletedString = $"Ahh, thank you!    That smells so good!",
@@ -42,18 +42,27 @@ namespace RagnarsRokare.Factions
                 new Errand
                 {
                     Id = 2,
-                    RequestString = $"I was chased by some boars the other day and then they ate all my berries. Could you teach them a lesson?",
+                    RequestString = $"I was chased by some boars the other day and then they ate all my berries. \nCould you teach them a lesson?",
                     RequestItem = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Trophie, "TrophyBoar").FirstOrDefault()?.m_itemData,
                     RequestItemAmount = 2,
                     CompletedString = "Ha! These won't eat any more of my berries! You have my gratitude.",
                     CanceledString = "They too much for you?  I really thought you could handle some pigs."
+                },
+                new Errand
+                {
+                    Id = 3,
+                    RequestString = $"It is something I remember from the days before...this place.  the sweet taste of honey. \nCould you bring me some?",
+                    RequestItem = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Consumable, "Honey").FirstOrDefault()?.m_itemData,
+                    RequestItemAmount = 2,
+                    CompletedString = "*gets a dreamy look* Yes!  It is every bit as good as I remembered it. \nThank you, thank you!",
+                    CanceledString = "No? You could not find any?"
                 }
             };
         }
 
         public static Errand GetRandomErrand()
         {
-            return Errands[UnityEngine.Random.Range(1, Errands.Length - 1)];
+            return Errands[UnityEngine.Random.Range(1, Errands.Length)];
         }
 
         public static bool CanStartNewErrand(ZDO npcZdo)

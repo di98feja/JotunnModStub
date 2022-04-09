@@ -84,6 +84,14 @@ namespace RagnarsRokare.Factions
             var tamable = npc.GetComponent<Tameable>();
             tamable.SetText(newName);
 
+            // Update bed text
+            var bedZDOId = npc.m_nview.GetZDO().GetZDOID(Misc.Constants.Z_NpcBedOwnerId);
+            if (bedZDOId != ZDOID.None)
+            {
+                var bedGO = ZNetScene.instance.FindInstance(bedZDOId);
+                bedGO.GetComponent<Bed>().SetOwner((long)npc.m_nview.GetZDO().m_uid.id, newName);
+            }
+
             return newName;
         }
 
