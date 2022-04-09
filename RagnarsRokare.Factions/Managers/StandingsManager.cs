@@ -16,10 +16,10 @@ namespace RagnarsRokare.Factions
 
         public static float GetStandingTowards(ZDO zdo, string factionId)
         {
-            IEnumerable<(string, float)> standings = GetStandings(zdo.GetString(Misc.Constants.Z_FactionStandings));
-            if (standings.Any(s => s.Item1 == factionId))
+            IEnumerable<StandingInfo> standings = GetStandings(zdo.GetString(Misc.Constants.Z_FactionStandings));
+            if (standings.Any(s => s.id == factionId))
             {
-                return standings.Single(s => s.Item1 == factionId.ToString()).Item2;
+                return standings.Single(s => s.id == factionId.ToString()).value;
             }
             else
             {
@@ -38,18 +38,18 @@ namespace RagnarsRokare.Factions
             if (string.IsNullOrEmpty(factionId)) return;
 
             Mathf.Clamp(standing, Misc.Constants.Standing_Minimum, Misc.Constants.Standing_Max);
-            var allStandings = GetStandings(zdo.GetString(Misc.Constants.Z_FactionStandings));
-            var factionStanding = allStandings.SingleOrDefault(s => s.Item1 == factionId.ToString());
-            if (factionStanding == default)
+            var allStandings = GetStandings(zdo.GetString(Misc.Constants.Z_FactionStandings)).ToList();
+            var factionStanding = allStandings.SingleOrDefault(s => s.id == factionId);
+            if (factionStanding == null)
             {
-                allStandings = allStandings.Append<(string, float)>((factionId.ToString(), standing));
+                allStandings.Add(new StandingInfo(factionId, standing));
             }
             else
             {
-                factionStanding.Item2 = standing;
+                factionStanding.value = standing;
             }
-            string newFactionString = string.Join("|", allStandings.Select(s => $"{s.Item1};{s.Item2.ToString(CultureInfo.InvariantCulture)}"));
-            zdo.Set(Misc.Constants.Z_FactionStandings, string.Join("|", allStandings.Select(s => $"{s.Item1};{s.Item2.ToString(CultureInfo.InvariantCulture)}")));
+            string newFactionString = string.Join("|", allStandings.Select(s => $"{s.id};{s.value.ToString(CultureInfo.InvariantCulture)}"));
+            zdo.Set(Misc.Constants.Z_FactionStandings, string.Join("|", allStandings.Select(s => $"{s.id};{s.value.ToString(CultureInfo.InvariantCulture)}")));
         }
 
         internal static void IncreaseStandingTowards(ZDO npcZdo, Faction faction, float standingIncrease)
@@ -57,13 +57,23 @@ namespace RagnarsRokare.Factions
             SetStandingTowards(npcZdo, faction, GetStandingTowards(npcZdo, faction) + standingIncrease);
         }
 
-        internal static IEnumerable<(string, float)> GetStandings(string standingsString)
+        internal static IEnumerable<StandingInfo> GetStandings(string standingsString)
         {
             foreach (System.Text.RegularExpressions.Match faction in System.Text.RegularExpressions.Regex.Matches(standingsString, RX_FactionStanding))
             {
-                yield return (faction.Groups["id"].Value, float.Parse(faction.Groups["standing"].Value, CultureInfo.InvariantCulture));
+                yield return new StandingInfo(faction.Groups["id"].Value, float.Parse(faction.Groups["standing"].Value, CultureInfo.InvariantCulture));
             }
-            
+        }
+
+        public class StandingInfo
+        {
+            public StandingInfo(string id, float value)
+            {
+                this.id = id;
+                this.value = value;
+            }
+            public string id;
+            public float value;
         }
     }
 }

@@ -112,7 +112,8 @@ namespace RagnarsRokare.Factions
             var activeErrand = ParseErrandsString(npcZdo.GetString(Misc.Constants.Z_NpcActiveErrand)).First();
             var errand = Errands[activeErrand.Item2];
 
-            player.m_inventory.RemoveItem(errand.RequestItem, errand.RequestItemAmount);
+            var inventoryItem = player.m_inventory.GetItem(errand.RequestItem.m_shared.m_name);
+            bool success = player.GetInventory().RemoveItem(inventoryItem, errand.RequestItemAmount);
             npcZdo.Set(Misc.Constants.Z_NpcActiveErrand, $"{0};{0}");
             RemoveThisNpcErrandFromPlayer(npcZdo, Player.m_localPlayer.m_nview.GetZDO());
             StandingsManager.IncreaseStandingTowards(npcZdo, FactionManager.GetPlayerFaction(player), Misc.Constants.ErrandStandingIncrease);

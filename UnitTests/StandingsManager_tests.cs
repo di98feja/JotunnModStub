@@ -27,8 +27,8 @@ namespace UnitTests
 
             var result = RagnarsRokare.Factions.StandingsManager.GetStandings(standingString);
             Assert.AreEqual(1, result.Count());
-            Assert.AreEqual(result.First().Item1, faction.FactionId.ToString());
-            Assert.AreEqual(result.First().Item2, 5.5f);
+            Assert.AreEqual(result.First().id, faction.FactionId.ToString());
+            Assert.AreEqual(result.First().value, 5.5f);
         }
 
         [TestMethod]
@@ -50,18 +50,18 @@ namespace UnitTests
 
             var result = RagnarsRokare.Factions.StandingsManager.GetStandings(standingString.ToString());
             Assert.AreEqual(6, result.Count());
-            Assert.AreEqual(result.ElementAt(0).Item1, faction1.FactionId.ToString());
-            Assert.AreEqual(result.ElementAt(0).Item2, 0.5f);
-            Assert.AreEqual(result.ElementAt(1).Item1, faction2.FactionId.ToString());
-            Assert.AreEqual(result.ElementAt(1).Item2, 15.5f);
-            Assert.AreEqual(result.ElementAt(2).Item1, faction3.FactionId.ToString());
-            Assert.AreEqual(result.ElementAt(2).Item2, 25.5f);
-            Assert.AreEqual(result.ElementAt(3).Item1, faction4.FactionId.ToString());
-            Assert.AreEqual(result.ElementAt(3).Item2, 18.5f);
-            Assert.AreEqual(result.ElementAt(4).Item1, faction5.FactionId.ToString());
-            Assert.AreEqual(result.ElementAt(4).Item2, 30.0f);
-            Assert.AreEqual(result.ElementAt(5).Item1, faction6.FactionId.ToString());
-            Assert.AreEqual(result.ElementAt(5).Item2, 5.0f);
+            Assert.AreEqual(result.ElementAt(0).id, faction1.FactionId.ToString());
+            Assert.AreEqual(result.ElementAt(0).value, 0.5f);
+            Assert.AreEqual(result.ElementAt(1).id, faction2.FactionId.ToString());
+            Assert.AreEqual(result.ElementAt(1).value, 15.5f);
+            Assert.AreEqual(result.ElementAt(2).id, faction3.FactionId.ToString());
+            Assert.AreEqual(result.ElementAt(2).value, 25.5f);
+            Assert.AreEqual(result.ElementAt(3).id, faction4.FactionId.ToString());
+            Assert.AreEqual(result.ElementAt(3).value, 18.5f);
+            Assert.AreEqual(result.ElementAt(4).id, faction5.FactionId.ToString());
+            Assert.AreEqual(result.ElementAt(4).value, 30.0f);
+            Assert.AreEqual(result.ElementAt(5).id, faction6.FactionId.ToString());
+            Assert.AreEqual(result.ElementAt(5).value, 5.0f);
         }
     }
 }
