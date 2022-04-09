@@ -25,8 +25,10 @@ namespace RagnarsRokare.Factions
         readonly EatingBehaviour eatingBehaviour;
         readonly SearchForItemsBehaviour searchForItemsBehaviour;
         readonly IFightBehaviour fightBehaviour;
-        private IDynamicBehaviour m_dynamicBehaviour, m_apathyBehaviour, m_hopelessBehaviour, m_sleepBehaviour;
-
+        private IDynamicBehaviour m_dynamicBehaviour;
+        private SleepBehaviour m_sleepBehaviour;
+        private ApathyBehaviour m_apathyBehaviour;
+        private HopelessBehaviour m_hopelessBehaviour;
 
         // Triggers
         readonly StateMachine<string, string>.TriggerWithParameters<float> UpdateTrigger;
@@ -123,6 +125,7 @@ namespace RagnarsRokare.Factions
             m_sleepBehaviour.SuccessState = State.Idle;
             m_sleepBehaviour.FailState = State.Idle;
             m_sleepBehaviour.Configure(this, Brain, State.DynamicBehaviour);
+            m_sleepBehaviour.SleepTime = 60f;
 
             eatingBehaviour = new EatingBehaviour
             {
@@ -206,14 +209,12 @@ namespace RagnarsRokare.Factions
             {
                 m_dynamicBehaviour = m_apathyBehaviour;               
             }
-            else if (MotivationLevel > 0 && MotivationLevel < 2)
+
+            else if (MotivationLevel > 0)
             {
                 m_dynamicBehaviour = m_hopelessBehaviour;
             }
-            else if (MotivationLevel > 1)
-            {
-                m_dynamicBehaviour = m_sleepBehaviour;
-            }
+
             var newBehaviour = m_dynamicBehaviour;
             Jotunn.Logger.LogDebug($"{Character.m_name}: Swithing to {newBehaviour}");
             m_dynamicBehaviourTimer = Time.time + DynamicBehaviourTime;
