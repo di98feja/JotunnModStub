@@ -26,7 +26,6 @@ namespace RagnarsRokare.Factions
         readonly SearchForItemsBehaviour searchForItemsBehaviour;
         readonly IFightBehaviour fightBehaviour;
         private IDynamicBehaviour m_dynamicBehaviour;
-        private SleepBehaviour m_sleepBehaviour;
         private ApathyBehaviour m_apathyBehaviour;
         private HopelessBehaviour m_hopelessBehaviour;
 
@@ -109,23 +108,17 @@ namespace RagnarsRokare.Factions
             UpdateTrigger = Brain.SetTriggerParameters<float>(Trigger.Update);
             m_containers = new MaxStack<Container>(Intelligence);
             m_config = config;
-            m_animator = Character.GetComponentInChildren<Animator>();
-
-            m_apathyBehaviour = new ApathyBehaviour();
-            m_apathyBehaviour.SuccessState = State.Idle;
-            m_apathyBehaviour.FailState = State.Idle;
-            m_apathyBehaviour.Configure(this, Brain, State.DynamicBehaviour);
+             m_animator = Character.GetComponentInChildren<Animator>();
 
             m_hopelessBehaviour = new HopelessBehaviour();
             m_hopelessBehaviour.SuccessState = State.Idle;
             m_hopelessBehaviour.FailState = State.Idle;
             m_hopelessBehaviour.Configure(this, Brain, State.DynamicBehaviour);
 
-            m_sleepBehaviour = new SleepBehaviour();
-            m_sleepBehaviour.SuccessState = State.Idle;
-            m_sleepBehaviour.FailState = State.Idle;
-            m_sleepBehaviour.Configure(this, Brain, State.DynamicBehaviour);
-            m_sleepBehaviour.SleepTime = 60f;
+            m_apathyBehaviour = new ApathyBehaviour();
+            m_apathyBehaviour.SuccessState = State.Idle;
+            m_apathyBehaviour.FailState = State.Idle;
+            m_apathyBehaviour.Configure(this, Brain, State.DynamicBehaviour);
 
             eatingBehaviour = new EatingBehaviour
             {
@@ -198,25 +191,25 @@ namespace RagnarsRokare.Factions
 
         private void NextDynamicBehaviour()
         {
-            if (m_dynamicBehaviour != null)
+             if (m_dynamicBehaviour != null)
             {
                 var oldBehaviour = m_dynamicBehaviour;
-                Jotunn.Logger.LogDebug($"{Character.m_name}: Swithing from {oldBehaviour}");
+                 Jotunn.Logger.LogDebug($"{Character.m_name}: Swithing from {oldBehaviour}");
                 m_dynamicBehaviour.Abort();
             }
             
-            if (MotivationLevel < 1)
+            if (MotivationLevel < 2)
             {
                 m_dynamicBehaviour = m_apathyBehaviour;               
             }
 
-            else if (MotivationLevel > 0)
+            else if (MotivationLevel > 1)
             {
                 m_dynamicBehaviour = m_hopelessBehaviour;
             }
 
             var newBehaviour = m_dynamicBehaviour;
-            Jotunn.Logger.LogDebug($"{Character.m_name}: Swithing to {newBehaviour}");
+             Jotunn.Logger.LogDebug($"{Character.m_name}: Swithing to {newBehaviour}");
             m_dynamicBehaviourTimer = Time.time + DynamicBehaviourTime;
             Brain.Fire(Trigger.ChangeDynamicBehaviour);
             return;

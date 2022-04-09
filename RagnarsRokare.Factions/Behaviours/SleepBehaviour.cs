@@ -32,14 +32,23 @@ namespace RagnarsRokare.Factions
 				this.prefix = prefix;
 			}
 		}
-        private class Trigger
-        {
-            public const string Abort = Prefix + "Abort";
-            public const string WalkToBed = Prefix + "WalkToBed";
-            public const string LieDown = Prefix + "LieDown";
-            public const string Sleep = Prefix + "Sleep";
-            public const string StandUp = Prefix + "StandUp";
-        }
+
+		private TriggerDef Trigger { get; set; }
+		private sealed class TriggerDef
+		{
+			private readonly string prefix;
+
+			public string Abort { get { return $"{prefix}Abort"; } }
+			public string WalkToBed { get { return $"{prefix}WalkToBed"; } }
+			public string LieDown { get { return $"{prefix}LieDown"; } }
+			public string Sleep { get { return $"{prefix}Sleep"; } }
+			public string StandUp { get { return $"{prefix}StandUp"; } }
+			public TriggerDef(string prefix)
+			{
+				this.prefix = prefix;
+
+			}
+		}
 
 		// Settings
 		public string StartState => State.Main;
@@ -47,13 +56,15 @@ namespace RagnarsRokare.Factions
         public string FailState { get; set; }
         public float SleepTime { get; set; }
 
+
         public void Abort()
         {
         }
 
         public void Configure(MobAIBase aiBase, StateMachine<string, string> brain, string parentState)
         {
-			State = new StateDef(Prefix);
+			State = new StateDef(parentState + Prefix);
+			Trigger = new TriggerDef(parentState + Prefix);
             m_zanim = aiBase.Instance.GetComponent<ZSyncAnimation>();
 
             brain.Configure(State.Main)

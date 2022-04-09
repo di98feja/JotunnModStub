@@ -10,18 +10,24 @@ namespace RagnarsRokare.Factions
         private const string Prefix = "RR_Hopeless";
         private float _currentStateTimeout;
         private Vector3 m_targetPosition;
+        private IDynamicBehaviour m_dynamicBehaviour;
+        private SleepBehaviour m_sleepBehaviour;
+        private float m_sleepTimer;
 
         private class State
         {
             public const string Main = Prefix + "Main";
             public const string Sit = Prefix + "Sit";
             public const string Wander = Prefix + "Wander";
+            public const string DynamicBehaviour = Prefix + "DynamicBehaviour";
         }
         private class Trigger
         {
             public const string Abort = Prefix + "Abort";
             public const string SitDown = Prefix + "SitDown";
             public const string RandomWalk = Prefix + "RandomWalk";
+            public const string StartDynamicBehaviour = Prefix + "StartDynamicBehaviour";
+            public const string ChangeDynamicBehaviour = Prefix + "ChangeDynamicBehaviour";
 
         }
 
@@ -51,8 +57,16 @@ namespace RagnarsRokare.Factions
 
         public void Configure(MobAIBase aiBase, StateMachine<string, string> brain, string parentState)
         {
+            m_sleepBehaviour = new SleepBehaviour();
+            m_sleepBehaviour.SuccessState = State.Main;
+            m_sleepBehaviour.FailState = State.Main;
+            m_sleepBehaviour.Configure(aiBase, brain, State.DynamicBehaviour);
+            m_sleepBehaviour.SleepTime = 60f;
+
+            m_dynamicBehaviour = m_sleepBehaviour;
+
             brain.Configure(State.Main)
-               .InitialTransition(State.Sit)
+               .InitialTransition(State.Wander)
                .SubstateOf(parentState)
                .PermitDynamic(Trigger.Abort, () => FailState)
                .OnEntry(t =>
@@ -81,7 +95,7 @@ namespace RagnarsRokare.Factions
 
             brain.Configure(State.Wander)
                 .SubstateOf(State.Main)
-                .Permit(Trigger.SitDown, State.Sit)
+                .Permit(Trigger.StartDynamicBehaviour, State.DynamicBehaviour)
                 .OnEntry(t =>
                 {
                     if (UnityEngine.Random.Range(0f, 100f) <= RandomCommentChance)
@@ -98,6 +112,37 @@ namespace RagnarsRokare.Factions
                     On.Character.IsEncumbered -= Character_IsEncumbered;
                     aiBase.Character.m_zanim.SetBool(Character.encumbered, value: false);
                 });
+
+            brain.Configure(State.DynamicBehaviour)
+                .SubstateOf(State.Main)
+                .PermitDynamic(Trigger.StartDynamicBehaviour, () => m_dynamicBehaviour.StartState)
+                .PermitReentry(Trigger.ChangeDynamicBehaviour)
+                .OnEntry(t =>
+                {
+                    Jotunn.Logger.LogDebug("DynamicBehaviour.OnEntry()");
+                    NextDynamicBehaviour(aiBase);
+                    brain.Fire(Trigger.StartDynamicBehaviour);
+                });
+        }
+
+        private void NextDynamicBehaviour(MobAIBase aiBase)
+        {
+            if (m_dynamicBehaviour != null)
+            {
+                var oldBehaviour = m_dynamicBehaviour;
+                Jotunn.Logger.LogDebug($"{aiBase.Character.m_name}: Swithing from {oldBehaviour}");
+                m_dynamicBehaviour.Abort();
+            }
+            if (m_sleepTimer > 60f)
+            {
+                m_dynamicBehaviour = m_sleepBehaviour;
+                m_sleepTimer = 0f;
+            }
+            else return;
+            var newBehaviour = m_dynamicBehaviour;
+            Jotunn.Logger.LogDebug($"{aiBase.Character.m_name}: Swithing to {newBehaviour}");
+            aiBase.Brain.Fire(Trigger.ChangeDynamicBehaviour);
+            return;
         }
 
         private void SayRandomThing(Character npc)
@@ -113,24 +158,23 @@ namespace RagnarsRokare.Factions
 
         public void Update(MobAIBase instance, float dt)
         {
-
-            if (instance.Brain.IsInState(State.Sit))
-            {
-                if (_currentStateTimeout > Time.time) return;
-
-                instance.Brain.Fire(Trigger.RandomWalk);
-                return;
-            }
-
+            m_sleepTimer += dt;
+            
             if (instance.Brain.IsInState(State.Wander))
             {
                 if (Time.time > _currentStateTimeout)
                 {
-                    instance.Brain.Fire(Trigger.SitDown);
+                    instance.Brain.Fire(Trigger.StartDynamicBehaviour);
                 }
                 instance.MoveAndAvoidFire(m_targetPosition, dt, 0f);
                 return;
             }
+            
+            if (instance.Brain.IsInState(State.DynamicBehaviour))
+            {
+                m_dynamicBehaviour.Update(instance, dt);
+            }
+
         }
 
         private Vector3 GetRandomPointInRadius(Vector3 center, float radius)
