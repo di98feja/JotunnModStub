@@ -1,5 +1,6 @@
 ﻿using Jotunn.GUI;
 using Jotunn.Managers;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,108 +12,227 @@ namespace RagnarsRokare.Factions
     {
         public static UnityEngine.GameObject InteractionPanel { get; private set; }
 
-        public static void TogglePanel(Character npc)
+        public static void StartNpcInteraction(Character npc)
         {
-            // Create the panel if it does not exist
-            if (!InteractionPanel)
+            var npcZdo = MobAI.Common.GetNView(npc)?.GetZDO();
+            if (npcZdo == null)
             {
-                if (GUIManager.Instance == null)
+                Logger.LogError($"Could not get ZDO from {npc.GetHoverName()}, can't interact");
+                return;
+            }
+            var playerStanding = StandingsManager.GetStandingTowards(npcZdo, FactionManager.GetLocalPlayerFaction());
+            //if (playerStanding <= Misc.Constants.Standing_MinimumInteraction)
+            //{
+            //    Logger.LogDebug($"{npc.GetHoverName()}: Player standing to low: {playerStanding}");
+            //    return;
+            //}
+
+            if (!HasGotRealName(npcZdo))
+            {
+                NpcManager.CreateAndSetRandomNameForNpc(npc);
+                ShowGreetPlayerDialog(npcZdo, Player.m_localPlayer);
+                return;
+            }
+
+            ShowErrandDialog(npcZdo, Player.m_localPlayer);
+        }
+
+        private static void ShowErrandDialog(ZDO npcZdo, Player player)
+        {
+            string npcText = String.Empty;
+            var responses = new List<Response>();
+            if (ErrandsManager.HasErrand(npcZdo, player))
+            {
+                npcText = "Yes? How did it go?";
+                responses.Add(new Response
                 {
-                    Logger.LogError("GUIManager instance is null");
-                    return;
-                }
-
-                if (!GUIManager.CustomGUIFront)
+                    Text = "On second thought, I no longer wish to complete your request",
+                    Callback = () =>
+                    {
+                        InteractionPanel.SetActive(false);
+                        string npcResponse = ErrandsManager.CancelErrand(npcZdo);
+                        CreateInteractionDialog(npcResponse, new Response[]
+                        {
+                            new Response
+                            {
+                                Text = "Farewell",
+                                Callback = () =>
+                                {
+                                    InteractionPanel.SetActive(false);
+                                    GUIManager.BlockInput(false);
+                                }
+                            }
+                        });
+                        InteractionPanel.SetActive(true);
+                    }
+                });
+                if (ErrandsManager.CanCompleteErrand(npcZdo, player))
                 {
-                    Logger.LogError("GUIManager CustomGUI is null");
-                    return;
+                    responses.Add(new Response
+                    {
+                        Text = "I have the things you requested",
+                        Callback = () =>
+                        {
+                            InteractionPanel.SetActive(false);
+                            string npcResponse = ErrandsManager.CompleteErrand(npcZdo, player);
+                            CreateInteractionDialog(npcResponse, new Response[]
+                            {
+                                new Response
+                                {
+                                    Text = "Odins blessings",
+                                    Callback = () =>
+                                    {
+                                        InteractionPanel.SetActive(false);
+                                        GUIManager.BlockInput(false);
+                                    }
+                                }
+                            });
+                            InteractionPanel.SetActive(true);
+                        }
+                    });
                 }
+                responses.Add(new Response
+                {
+                    Text = "Oh, never mind",
+                    Callback = () =>
+                    {
+                        InteractionPanel.SetActive(false);
+                        GUIManager.BlockInput(false);
+                    }
+                });
+            }
+            else
+            {
+                var errand = ErrandsManager.GetRandomErrand();
+                npcText = Localization.instance.Localize(errand.RequestString);
+                responses.Add(new Response
+                {
+                    Text = Localization.instance.Localize($"Alright, consider it done. (Bring {errand.RequestItemAmount} {errand.RequestItem.m_shared.m_name})"),
+                    Callback = () =>
+                    {
+                        InteractionPanel.SetActive(false);
+                        GUIManager.BlockInput(false);
+                        ErrandsManager.StartErrand(errand.Id, npcZdo, player);
+                    }
+                });
 
-                // Create the panel object
-                InteractionPanel = GUIManager.Instance.CreateWoodpanel(
-                    parent: GUIManager.CustomGUIFront.transform,
-                    anchorMin: new Vector2(0.5f, 0.5f),
-                    anchorMax: new Vector2(0.5f, 0.5f),
-                    position: new Vector2(0, 0),
-                    width: 850,
-                    height: 600,
-                    draggable: false);
-                InteractionPanel.SetActive(false);
+                responses.Add(new Response
+                {
+                    Text = "No, I have better thigs to do",
+                    Callback = () =>
+                    {
+                        InteractionPanel.SetActive(false);
+                        GUIManager.BlockInput(false);
+                    }
+                });
+            }
+            CreateInteractionDialog(npcText, responses.ToArray());
+            InteractionPanel.SetActive(true);
+            GUIManager.BlockInput(true);
+        }
 
-                // Add the Jötunn draggable Component to the panel
-                // Note: This is normally automatically added when using CreateWoodpanel()
-                InteractionPanel.AddComponent<DragWindowCntrl>();
-
-                // Create the text object
-                GUIManager.Instance.CreateText(
-                    text: npc.GetHoverName(),
-                    parent: InteractionPanel.transform,
-                    anchorMin: new Vector2(0.5f, 1f),
-                    anchorMax: new Vector2(0.5f, 1f),
-                    position: new Vector2(0f, -50f),
-                    font: GUIManager.Instance.AveriaSerifBold,
-                    fontSize: 30,
-                    color: GUIManager.Instance.ValheimOrange,
-                    outline: true,
-                    outlineColor: Color.black,
-                    width: 350f,
-                    height: 40f,
-                    addContentSizeFitter: false);
-
-                // Create the button object
-                GameObject buttonObject = GUIManager.Instance.CreateButton(
-                    text: "A Test Button - long dong schlongsen text",
-                    parent: InteractionPanel.transform,
-                    anchorMin: new Vector2(0.5f, 0.5f),
-                    anchorMax: new Vector2(0.5f, 0.5f),
-                    position: new Vector2(0, -250f),
-                    width: 250f,
-                    height: 60f);
-                buttonObject.SetActive(true);
-
-                // Add a listener to the button to close the panel again
-                Button button = buttonObject.GetComponent<Button>();
-                button.onClick.AddListener(() =>
+        private static void ShowGreetPlayerDialog(ZDO npcZdo, Player m_localPlayer)
+        {
+            var response = new Response
+            {
+                Text = $"Well met {npcZdo.GetString(Constants.Z_GivenName)}, I am {m_localPlayer.GetHoverName()}",
+                Callback = () =>
                 {
                     InteractionPanel.SetActive(false);
                     GUIManager.BlockInput(false);
-                });
+                }
+            };
+            var response2 = new Response
+            {
+                Text = $"Sod off {npcZdo.GetString(Constants.Z_GivenName)}",
+                Callback = () =>
+                {
+                    InteractionPanel.SetActive(false);
+                    GUIManager.BlockInput(false);
+                }
+            };
 
-                // Create a dropdown
-                var dropdownObject = GUIManager.Instance.CreateDropDown(
-                    parent: InteractionPanel.transform,
-                    anchorMin: new Vector2(0.5f, 0.5f),
-                    anchorMax: new Vector2(0.5f, 0.5f),
-                    position: new Vector2(-250f, -250f),
-                    fontSize: 16,
-                    width: 100f,
-                    height: 30f);
-                dropdownObject.GetComponent<Dropdown>().AddOptions(new List<string>
+            CreateInteractionDialog($"Greetings stranger, I am {npcZdo.GetString(Constants.Z_GivenName)}", new Response[] {response, response2});
+            InteractionPanel.SetActive(true);
+            GUIManager.BlockInput(true);
+        }
+
+        private static void CreateInteractionDialog(string npcSays, Response[] responses)
         {
-            "bla", "blubb", "börks", "blarp", "harhar"
-        });
-
-                // Create an input field
-                GUIManager.Instance.CreateInputField(
-                    parent: InteractionPanel.transform,
-                    anchorMin: new Vector2(0.5f, 0.5f),
-                    anchorMax: new Vector2(0.5f, 0.5f),
-                    position: new Vector2(250f, -250f),
-                    contentType: InputField.ContentType.Standard,
-                    placeholderText: "input...",
-                    fontSize: 16,
-                    width: 160f,
-                    height: 30f);
+            if (GUIManager.Instance == null)
+            {
+                Logger.LogError("GUIManager instance is null");
+                return;
             }
 
-            // Switch the current state
-            bool state = !InteractionPanel.activeSelf;
+            if (!GUIManager.CustomGUIFront)
+            {
+                Logger.LogError("GUIManager CustomGUI is null");
+                return;
+            }
 
-            // Set the active state of the panel
-            InteractionPanel.SetActive(state);
+            // Create the panel object
+            InteractionPanel = GUIManager.Instance.CreateWoodpanel(
+                parent: GUIManager.CustomGUIFront.transform,
+                anchorMin: new Vector2(0.5f, 0.5f),
+                anchorMax: new Vector2(0.5f, 0.5f),
+                position: new Vector2(0, 0),
+                width: 850,
+                height: 100 + 80 * responses.Length,
+                draggable: false);
+            InteractionPanel.SetActive(false);
 
-            // Toggle input for the player and camera while displaying the GUI
-            GUIManager.BlockInput(state);
+            // Add the Jötunn draggable Component to the panel
+            // Note: This is normally automatically added when using CreateWoodpanel()
+            InteractionPanel.AddComponent<DragWindowCntrl>();
+
+            // Create the text object
+            GUIManager.Instance.CreateText(
+                text: npcSays,
+                parent: InteractionPanel.transform,
+                anchorMin: new Vector2(0.5f, 1f),
+                anchorMax: new Vector2(0.5f, 1f),
+                position: new Vector2(0f, -40f),
+                font: GUIManager.Instance.AveriaSerifBold,
+                fontSize: 20,
+                color: GUIManager.Instance.ValheimOrange,
+                outline: false,
+                outlineColor: Color.black,
+                width: 800f,
+                height: 60f,
+                addContentSizeFitter: false);
+
+            float buttonYPos = 60f;
+            foreach (var response in responses)
+            {
+                // Create the button object
+                GameObject greetButton = GUIManager.Instance.CreateButton(
+                    text: response.Text,
+                    parent: InteractionPanel.transform,
+                    anchorMin: new Vector2(0.5f, 0f),
+                    anchorMax: new Vector2(0.5f, 0f),
+                    position: new Vector2(0, buttonYPos),
+                    width: 800f,
+                    height: 60f);
+                greetButton.SetActive(true);
+
+                // Add a listener to the button to close the panel again
+                Button button = greetButton.GetComponent<Button>();
+                button.onClick.AddListener(() => response.Callback());
+
+                buttonYPos += 60f;
+            }
+        }
+
+        private static bool HasGotRealName(ZDO npcZdo)
+        {
+            return !string.IsNullOrEmpty(npcZdo.GetString(Constants.Z_GivenName));
+        }
+
+        private class Response
+        {
+            public string Text { get; set; }
+            public Action Callback { get; set; } = null;
         }
     }
 }

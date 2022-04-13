@@ -2,16 +2,26 @@
 {
     internal static class Constants
     {
-        internal const float MinStanding = 0.0f;
-        internal const float NeutralStanding = 10.0f;
-        internal const float KnownStanding = 15.0f;
-        internal const float FriendlyStanding = 20.0f;
-        internal const float MaxStanding = 30.0f;
+        internal const float Standing_Minimum = 0.0f;
+        internal const float Standing_Suspicious = 10.0f;
+        internal const float Standing_MinimumInteraction = 11.0f;
+        internal const float Standing_Neutral = 15.0f;
+        internal const float Standing_Friendly = 20.0f;
+        internal const float Standing_Max = 30.0f;
+
+        internal const float Motivation_Apathy = 0.0f;
+        internal const float Motivation_Hopeless = 3.0f;
+        internal const float Motivation_Unmotivated = 5.0f;
+        internal const float Motivation_Uninspired = 8.0f;
+
+        internal const float ErrandStandingIncrease = 1.0f;
 
         internal const string Z_FactionStandings = "RR_FactionStandings";
         internal const string Z_Faction = "RR_Faction";
         internal const string Z_HungerLevel = "RR_HungerLevel";
         internal const string Z_ComfortLevel = "RR_ComfortLevel";
-        internal const string Z_NpcBedOwnerId = "Z_NpcBedOwnerId";
+        internal const string Z_NpcBedOwnerId = "RR_NpcBedOwnerId";
+        internal const string Z_NpcActiveErrand = "RR_NpcActiveErrandId";
+        internal const string Z_PlayerActiveErrands = "RR_PLayerActiveErrands";
     }
 }

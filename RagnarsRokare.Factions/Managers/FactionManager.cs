@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace RagnarsRokare.Factions
 {
     internal static class FactionManager
     {
-        private static Dictionary<string,Faction> Factions = new Dictionary<string,Faction>();
+        private static Dictionary<string, Faction> Factions = new Dictionary<string, Faction>();
 
         static FactionManager()
         {
@@ -34,6 +35,29 @@ namespace RagnarsRokare.Factions
                 result.Name = faction.Name;
                 result.Description = faction.Description;
             }
+        }
+
+        public static Faction GetLocalPlayerFaction()
+        {
+            return GetPlayerFaction(Player.m_localPlayer);
+        }
+
+        public static Faction GetPlayerFaction(Player player)
+        {
+            var playerZdo = player.m_nview.GetZDO();
+            var playerFactionId = playerZdo.GetString(Misc.Constants.Z_Faction);
+            if (string.IsNullOrEmpty(playerFactionId))
+            {
+                playerFactionId = Factions.Values.FirstOrDefault(f => f.Name == "Test").FactionId;
+                SetPlayerFaction(player, playerFactionId);
+            }
+            return GetFaction(playerFactionId);
+        }
+
+        public static void SetPlayerFaction(Player player, string factionId)
+        {
+            var playerZdo = player.m_nview.GetZDO();
+            playerZdo.Set(Misc.Constants.Z_Faction, factionId);
         }
 
         // TODO: Load factions

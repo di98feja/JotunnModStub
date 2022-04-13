@@ -74,6 +74,41 @@ namespace RagnarsRokare.Factions
             return zdoList.ToArray();
         }
 
+        public static string CreateAndSetRandomNameForNpc(Character npc)
+        {
+            string newName = IsMale(npc.gameObject) ? RandomizeMaleName() : RandomizeFemaleName();
+
+            var nview = npc.GetComponent<ZNetView>();
+            nview.ClaimOwnership();
+            nview.GetZDO().Set(Constants.Z_GivenName, newName);
+            var tamable = npc.GetComponent<Tameable>();
+            tamable.SetText(newName);
+
+            // Update bed text
+            var bedZDOId = npc.m_nview.GetZDO().GetZDOID(Misc.Constants.Z_NpcBedOwnerId);
+            if (bedZDOId != ZDOID.None)
+            {
+                var bedGO = ZNetScene.instance.FindInstance(bedZDOId);
+                bedGO.GetComponent<Bed>().SetOwner((long)npc.m_nview.GetZDO().m_uid.id, newName);
+            }
+
+            return newName;
+        }
+
+        private static string RandomizeMaleName()
+        {
+            string[] beginnings = new string[] { "Sig", "Ulf", "Tor", "Alf" };
+            string[] endings = new string[] { "var", "gor", "dur", "bar", "e" };
+            return $"{beginnings[m_random.Next(beginnings.Length)]}{endings[m_random.Next(endings.Length)]}";
+        }
+
+        private static string RandomizeFemaleName()
+        {
+            string[] beginnings = new string[] { "Sig", "Heid", "Gun", "Britt" };
+            string[] endings = new string[] { "vor", "rid", "lin", "a" };
+            return $"{beginnings[m_random.Next(beginnings.Length)]}{endings[m_random.Next(endings.Length)]}";
+        }
+
         public static GameObject CreateRandomizedNpc(Transform parent, Vector3 localPosition)
         {
             var npc = UnityEngine.Object.Instantiate(CreatureManager.Instance.GetCreaturePrefab("NPC"), parent);
@@ -126,6 +161,12 @@ namespace RagnarsRokare.Factions
             }
             npc.GetComponent<Humanoid>().HideHandItems();
             nview.GetZDO().Set(Constants.Z_trainedAssignments, "Npc");
+        }
+
+        public static bool IsMale(GameObject npc)
+        {
+            var visEquip = npc.GetComponent<VisEquipment>();
+            return visEquip.GetModelIndex() == 0;
         }
 
         private static string CreateNpcName()

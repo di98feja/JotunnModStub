@@ -1,9 +1,4 @@
 ﻿using HarmonyLib;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace RagnarsRokare.Factions.Patches
@@ -28,13 +23,14 @@ namespace RagnarsRokare.Factions.Patches
                 var npcZdo = ___m_nview.GetZDO();
                 var playerFactionId = Player.m_localPlayer.m_nview.GetZDO().GetString(Misc.Constants.Z_Faction);
                 var standing = StandingsManager.GetStandingTowards(npcZdo, playerFactionId);
-                if (standing >= Misc.Constants.FriendlyStanding)
+                if (standing >= Misc.Constants.Standing_Friendly)
                 {
                     str += Localization.instance.Localize("\n[<color=yellow><b>$KEY_Use</b></color>] to command");
                 }
-                if (standing >= Misc.Constants.KnownStanding)
+                if (standing >= Misc.Constants.Standing_Minimum)
                 {
                     str += Localization.instance.Localize("\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] to interact");
+                    str += $"\nMotivation:{(MobAI.MobManager.AliveMobs[npcZdo.GetString(Constants.Z_UniqueId)] as NpcAI).MotivationLevel}, Standing:{standing}";
                 }
                 __result = str;
                 return false;
@@ -58,34 +54,48 @@ namespace RagnarsRokare.Factions.Patches
                 if (___m_character.IsTamed())
                 {
                     var npcZdo = ___m_nview.GetZDO();
-                    var playerFactionId = user.m_nview.GetZDO().GetString(Misc.Constants.Z_Faction);
+                    var playerFactionId = FactionManager.GetPlayerFaction((user as Player));
                     var standing = StandingsManager.GetStandingTowards(npcZdo, playerFactionId);
-                    InteractionManager.TogglePanel(___m_character);
-                    if (standing <= Misc.Constants.KnownStanding)
+                    if (standing <= Misc.Constants.Standing_Minimum)
                     {
                         var npcAi = MobAI.MobManager.AliveMobs[npcZdo.GetString(Constants.Z_UniqueId)] as NpcAI;
                         if (npcAi != null)
                         {
-                            npcAi.StartEmote(EmoteManager.Emotes.Nonono);
+                            string stringToShow = "";
+                            if (npcAi.MotivationLevel < Misc.Constants.Motivation_Hopeless)
+                            {
+                                stringToShow = "*barely aknowledge you*";
+                            }
+                            else if (npcAi.MotivationLevel < Misc.Constants.Motivation_Uninspired)
+                            {
+                                npcAi.StartEmote(EmoteManager.Emotes.Nonono);
+                                stringToShow = "Who are you, go away!";
+                            }
+                            else
+                            {
+                                npcAi.StartEmote(EmoteManager.Emotes.Challenge);
+                                stringToShow = "Stand back stranger, I don't trust you";
+                            }
+                            __instance.GetComponent<Talker>().Say(Talker.Type.Normal, stringToShow);
                         }
-                        __instance.GetComponent<Talker>().Say(Talker.Type.Normal, "Who are you? Go away!");
                         __result = false;
                         return false;
                     }
 
-                    if (alt && standing >= Misc.Constants.KnownStanding)
+                    if (alt)
                     {
                         // Show interaction dialog
+                        InteractionManager.StartNpcInteraction(___m_character);
                         __result = false;
                         return false;
                     }
 
-                    if (Time.time - ___m_lastPetTime > 1f)
+                    if (Time.time - ___m_lastPetTime > 1f && standing >= Misc.Constants.Standing_Friendly)
                     {
                         ___m_lastPetTime = Time.time;
-                        if (__instance.m_commandable && standing >= Misc.Constants.FriendlyStanding)
+                        if (__instance.m_commandable && standing >= Misc.Constants.Standing_Friendly)
                         {
-                            __instance.Command( user );
+                            __instance.Command(user);
                         }
                         __result = true;
                         return false;

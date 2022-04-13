@@ -64,6 +64,7 @@ namespace RagnarsRokare.Factions
             public const string Follow = "Follow";
             public const string ChangeDynamicBehaviour = "ChangeDynamicBehaviour";
             public const string StartDynamicBehaviour = "StartDynamicBehaviour";
+            public const string StopDynamicBehaviour = "StopDynamicBehaviour";
         }
 
         public int HungerLevel
@@ -181,6 +182,7 @@ namespace RagnarsRokare.Factions
             Brain.Configure(State.DynamicBehaviour)
                 .SubstateOf(State.Idle)
                 .PermitDynamic(Trigger.StartDynamicBehaviour, () => m_dynamicBehaviour.StartState)
+                .Permit(Trigger.StopDynamicBehaviour, State.Idle)
                 .PermitReentry(Trigger.ChangeDynamicBehaviour)
                 .OnEntry(t =>
                 {
@@ -198,18 +200,23 @@ namespace RagnarsRokare.Factions
                 m_dynamicBehaviour.Abort();
             }
             
-            if (MotivationLevel < 2)
+            if (MotivationLevel < Misc.Constants.Motivation_Hopeless)
             {
                 m_dynamicBehaviour = m_apathyBehaviour;               
             }
-
-            else if (MotivationLevel > 1)
+            else if (MotivationLevel > Misc.Constants.Motivation_Unmotivated)
             {
                 m_dynamicBehaviour = m_hopelessBehaviour;
             }
+            else
+            {
+                Brain.Fire(Trigger.StopDynamicBehaviour);
+                m_dynamicBehaviour = null;
+                return;
+            }
 
             var newBehaviour = m_dynamicBehaviour;
-             Jotunn.Logger.LogDebug($"{Character.m_name}: Swithing to {newBehaviour}");
+            Jotunn.Logger.LogDebug($"{Character.m_name}: Swithing to {newBehaviour?.ToString() ?? "None"}");
             m_dynamicBehaviourTimer = Time.time + DynamicBehaviourTime;
             Brain.Fire(Trigger.ChangeDynamicBehaviour);
             return;
@@ -296,10 +303,10 @@ namespace RagnarsRokare.Factions
             Brain.Fire(Trigger.TakeDamage);
             Brain.Fire(Trigger.Follow);
 
-            if (Time.time > m_dynamicBehaviourTimer)
-            {
-                NextDynamicBehaviour();
-            }
+            //if (Time.time > m_dynamicBehaviourTimer)
+            //{
+            //    NextDynamicBehaviour();
+            //}
 
             if (Time.time > m_calculateComfortTimer)
             {
