@@ -125,11 +125,11 @@ namespace RagnarsRokare.Factions
             var selectedBehaviour = m_dynamicBehaviour;
             if (motivation < Misc.Constants.Motivation_Hopeless)
             {
-                m_dynamicBehaviour = m_apathyBehaviour;               
+                selectedBehaviour = m_apathyBehaviour;               
             }
             else if (motivation < Misc.Constants.Motivation_Hopefull)
             {
-                m_dynamicBehaviour = m_hopelessBehaviour;
+                selectedBehaviour = m_hopelessBehaviour;
             }
 
             if (selectedBehaviour == m_dynamicBehaviour) return;
@@ -153,7 +153,7 @@ namespace RagnarsRokare.Factions
             base.UpdateAI(dt);
             EmoteManager.UpdateEmote(NView, ref m_emoteState, ref m_emoteID, ref m_animator);
 
-            if (Time.time > m_calculateComfortTimer)
+            if (Time.time > m_calculateComfortTimer || m_dynamicBehaviour == null)
             {
                 var cl = CalculateComfortLevel();
                 if (cl >= 0)
@@ -163,7 +163,7 @@ namespace RagnarsRokare.Factions
                 m_calculateComfortTimer = Time.time + CalculateComfortLevelInterval;
                 var motivation = MotivationManager.CalculateMotivation(NView.GetZDO(), ComfortLevel);
                 Debug.Log($"Motivation = {motivation} ");
-                if (MotivationLevel != motivation)
+                if (MotivationLevel != motivation || m_dynamicBehaviour == null)
                 {
                     MotivationLevel = motivation;
                     SelectDynamicBehaviour(motivation);

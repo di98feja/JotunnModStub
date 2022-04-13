@@ -50,7 +50,6 @@ namespace RagnarsRokare.Factions
         public string FailState { get; set; }
         public float StateTimeout { get; set; } = 10f;
         public float RandomCommentChance { get; set; } = 25f;
-        public float SleepTime { get; set; } = 300f;
 
         public void Abort()
         {
@@ -72,9 +71,6 @@ namespace RagnarsRokare.Factions
             m_eatingBehaviour.HungryTimeout = 60f;
             m_eatingBehaviour.Configure(aiBase, brain, State.DynamicBehaviour);
 
-
-
-            m_sleepTimer = Time.time + SleepTime;
 
             brain.Configure(State.Main)
                .InitialTransition(State.Wander)
@@ -142,13 +138,6 @@ namespace RagnarsRokare.Factions
 
         private void SayRandomThing(Character npc)
         {
-            if (m_dynamicBehaviour != null)
-            {
-                var oldBehaviour = m_dynamicBehaviour;
-                Jotunn.Logger.LogDebug($"{aiBase.Character.m_name}: Swithing from {oldBehaviour}");
-                m_dynamicBehaviour.Abort();
-            }
-            if (EnvMan.instance.IsNight())
             int index = UnityEngine.Random.Range(0, Comments.Length);
             npc.GetComponent<Talker>().Say(Talker.Type.Normal, Comments[index]);
         }
@@ -167,15 +156,6 @@ namespace RagnarsRokare.Factions
             {
                 return;
             }
-                m_dynamicBehaviour = m_sleepBehaviour;
-            }
-            else return;
-            var newBehaviour = m_dynamicBehaviour;
-            Jotunn.Logger.LogDebug($"{aiBase.Character.m_name}: Swithing to {newBehaviour}");
-            aiBase.Brain.Fire(Trigger.ChangeDynamicBehaviour);
-            return;
-        }
-
             if (instance.Brain.IsInState(State.DynamicBehaviour))
             {
                 m_dynamicBehaviour.Update(instance, dt);
@@ -189,7 +169,7 @@ namespace RagnarsRokare.Factions
                 return;
             }
 
-            if (Time.time > m_sleepTimer)
+            if (EnvMan.instance.IsNight())
             {
                 m_dynamicBehaviour = m_sleepBehaviour;
                 instance.Brain.Fire(Trigger.ChangeDynamicBehaviour);
