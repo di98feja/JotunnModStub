@@ -48,6 +48,9 @@ namespace RagnarsRokare.Factions
                 ai.m_randomMoveInterval = 15 - mobInfo.Mobility;
                 string givenName = ___m_nview?.GetZDO()?.GetString(Constants.Z_GivenName);
 
+                var npcContainer = __instance.GetComponent<NpcContainer>();
+                npcContainer.Init((__instance as Humanoid).GetInventory());
+
                 Jotunn.Logger.LogInfo($"{__instance.m_name} woke up");
             }
         }

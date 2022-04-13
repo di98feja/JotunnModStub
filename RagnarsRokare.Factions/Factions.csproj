@@ -117,6 +117,7 @@
     <Compile Include="Managers\NpcManager.cs" />
     <Compile Include="Managers\StandingsManager.cs" />
     <Compile Include="NpcAI.cs" />
+    <Compile Include="NpcContainer.cs" />
     <Compile Include="Patches\Bed_patch.cs" />
     <Compile Include="Patches\Character_patches.cs" />
     <Compile Include="Patches\Tamable_patches.cs" />
