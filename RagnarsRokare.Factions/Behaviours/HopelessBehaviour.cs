@@ -12,7 +12,6 @@ namespace RagnarsRokare.Factions
         private Vector3 m_targetPosition;
         private IDynamicBehaviour m_dynamicBehaviour;
         private SleepBehaviour m_sleepBehaviour;
-        private float m_sleepTimer;
 
         private class State
         {
@@ -33,14 +32,14 @@ namespace RagnarsRokare.Factions
 
         private String[] Comments = new String[]
         {
-            "Why did the gods place me here",
-            "I need something to do",
+            "Why did the gods place me here?",
+            "I wish I had a purpose",
             "What am I suppose to do here?",
-            "*sobs*",
             "How long must this go on?",
             "Is there a reason for this?",
-            "*Looks at a tree*",
-            "*looks utterly bored*"
+            "All I do is die, die, die...",
+            "*looks bored*",
+            "*sigh*"
         };
 
         // Settings
@@ -61,7 +60,7 @@ namespace RagnarsRokare.Factions
             m_sleepBehaviour.SuccessState = State.Main;
             m_sleepBehaviour.FailState = State.Main;
             m_sleepBehaviour.Configure(aiBase, brain, State.DynamicBehaviour);
-            m_sleepBehaviour.SleepTime = 60f;
+            m_sleepBehaviour.SleepUntilMorning = true;
 
             m_dynamicBehaviour = m_sleepBehaviour;
 
@@ -133,10 +132,9 @@ namespace RagnarsRokare.Factions
                 Jotunn.Logger.LogDebug($"{aiBase.Character.m_name}: Swithing from {oldBehaviour}");
                 m_dynamicBehaviour.Abort();
             }
-            if (m_sleepTimer > 60f)
+            if (EnvMan.instance.IsNight())
             {
                 m_dynamicBehaviour = m_sleepBehaviour;
-                m_sleepTimer = 0f;
             }
             else return;
             var newBehaviour = m_dynamicBehaviour;
@@ -158,7 +156,6 @@ namespace RagnarsRokare.Factions
 
         public void Update(MobAIBase instance, float dt)
         {
-            m_sleepTimer += dt;
             
             if (instance.Brain.IsInState(State.Wander))
             {

@@ -10,9 +10,11 @@
         internal const float Standing_Max = 30.0f;
 
         internal const float Motivation_Apathy = 0.0f;
-        internal const float Motivation_Hopeless = 3.0f;
-        internal const float Motivation_Unmotivated = 5.0f;
-        internal const float Motivation_Uninspired = 8.0f;
+        internal const float Motivation_Hopeless = 8.0f;
+        internal const float Motivation_Hopefull = 15.0f;
+        internal const float Motivation_Inspired = 20.0f;
+        internal const float Motivation_Joyfull = 25.0f;
+        internal const float Motivation_Blissfull = 30.0f;
 
         internal const float ErrandStandingIncrease = 1.0f;
 

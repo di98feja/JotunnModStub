@@ -27,12 +27,7 @@ namespace RagnarsRokare.Factions
 
         private String[] Comments = new String[]
         {
-            "Curse the gods for putting me here",
-            "I give up",
-            "What is the meaning of this?",
             "*sobs*",
-            "All I do is die, die die...",
-            "Everything is so pointless",
             "*stares blankly into the void*",
             "*looks utterly defeated*"
         };

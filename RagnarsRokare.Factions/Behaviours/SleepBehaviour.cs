@@ -55,7 +55,7 @@ namespace RagnarsRokare.Factions
         public string SuccessState { get; set; }
         public string FailState { get; set; }
         public float SleepTime { get; set; }
-
+		public bool SleepUntilMorning { get; set; }
 
         public void Abort()
         {
@@ -101,7 +101,7 @@ namespace RagnarsRokare.Factions
 						aiBase.Brain.Fire(Trigger.Abort);
 						return; // No bed, no sleep
 					}
-					m_sleepTimer = Time.time + SleepTime;
+					m_sleepTimer = Time.time + (SleepUntilMorning ? float.MaxValue : SleepTime);
 					var bedGO = ZNetScene.instance.FindInstance(bedZDOId);
 
 					AttachStart(aiBase, bedGO.transform, bedGO, hideWeapons: true, isBed: true, onShip: false, "attach_bed", new Vector3(0f, 0.1f, 0f));
@@ -128,11 +128,10 @@ namespace RagnarsRokare.Factions
             }
             if (aiBase.Brain.IsInState(State.Sleeping))
             {
-                if (Time.time > m_sleepTimer)
+                if (SleepUntilMorning && !EnvMan.instance.IsNight() || Time.time > m_sleepTimer)
                 {
                     aiBase.Brain.Fire(Trigger.StandUp);
                 }
-				//UpdateAttach(aiBase);
                 return;
             }
         }

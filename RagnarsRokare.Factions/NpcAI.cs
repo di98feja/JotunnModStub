@@ -191,33 +191,30 @@ namespace RagnarsRokare.Factions
                 });
         }
 
-        private void NextDynamicBehaviour()
+        private void SelectDynamicBehaviour(float motivation)
         {
-             if (m_dynamicBehaviour != null)
-            {
-                var oldBehaviour = m_dynamicBehaviour;
-                 Jotunn.Logger.LogDebug($"{Character.m_name}: Swithing from {oldBehaviour}");
-                m_dynamicBehaviour.Abort();
-            }
-            
-            if (MotivationLevel < Misc.Constants.Motivation_Hopeless)
+            var selectedBehaviour = m_dynamicBehaviour;
+            if (motivation < Misc.Constants.Motivation_Hopeless)
             {
                 m_dynamicBehaviour = m_apathyBehaviour;               
             }
-            else if (MotivationLevel > Misc.Constants.Motivation_Unmotivated)
+            else if (motivation < Misc.Constants.Motivation_Hopefull)
             {
                 m_dynamicBehaviour = m_hopelessBehaviour;
             }
-            else
+
+            if (selectedBehaviour == m_dynamicBehaviour) return;
+
+            if (m_dynamicBehaviour != null)
             {
-                Brain.Fire(Trigger.StopDynamicBehaviour);
-                m_dynamicBehaviour = null;
-                return;
+                var oldBehaviour = m_dynamicBehaviour;
+                Jotunn.Logger.LogDebug($"{Character.m_name}: Swithing from {oldBehaviour}");
+                m_dynamicBehaviour.Abort();
             }
 
-            var newBehaviour = m_dynamicBehaviour;
-            Jotunn.Logger.LogDebug($"{Character.m_name}: Swithing to {newBehaviour?.ToString() ?? "None"}");
+            Jotunn.Logger.LogDebug($"{Character.m_name}: Swithing to {selectedBehaviour?.ToString() ?? "None"}");
             m_dynamicBehaviourTimer = Time.time + DynamicBehaviourTime;
+            m_dynamicBehaviour = selectedBehaviour;
             Brain.Fire(Trigger.ChangeDynamicBehaviour);
             return;
         }
@@ -321,7 +318,7 @@ namespace RagnarsRokare.Factions
                 if (MotivationLevel != motivation)
                 {
                     MotivationLevel = motivation;
-                    NextDynamicBehaviour();
+                    SelectDynamicBehaviour(motivation);
                 }
             }
 

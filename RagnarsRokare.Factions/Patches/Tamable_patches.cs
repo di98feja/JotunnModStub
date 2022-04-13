@@ -56,7 +56,7 @@ namespace RagnarsRokare.Factions.Patches
                     var npcZdo = ___m_nview.GetZDO();
                     var playerFactionId = FactionManager.GetPlayerFaction((user as Player));
                     var standing = StandingsManager.GetStandingTowards(npcZdo, playerFactionId);
-                    if (standing <= Misc.Constants.Standing_Minimum)
+                    if (standing <= Misc.Constants.Standing_MinimumInteraction)
                     {
                         var npcAi = MobAI.MobManager.AliveMobs[npcZdo.GetString(Constants.Z_UniqueId)] as NpcAI;
                         if (npcAi != null)
@@ -66,7 +66,7 @@ namespace RagnarsRokare.Factions.Patches
                             {
                                 stringToShow = "*barely aknowledge you*";
                             }
-                            else if (npcAi.MotivationLevel < Misc.Constants.Motivation_Uninspired)
+                            else if (npcAi.MotivationLevel < Misc.Constants.Motivation_Hopefull)
                             {
                                 npcAi.StartEmote(EmoteManager.Emotes.Nonono);
                                 stringToShow = "Who are you, go away!";
