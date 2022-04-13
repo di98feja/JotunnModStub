@@ -12,6 +12,8 @@ namespace RagnarsRokare.Factions
         private Vector3 m_targetPosition;
         private IDynamicBehaviour m_dynamicBehaviour;
         private SleepBehaviour m_sleepBehaviour;
+        private DynamicEatingBehaviour m_eatingBehaviour;
+        private MaxStack<Container> m_containers;
 
         private class State
         {
@@ -48,10 +50,12 @@ namespace RagnarsRokare.Factions
         public string FailState { get; set; }
         public float StateTimeout { get; set; } = 10f;
         public float RandomCommentChance { get; set; } = 25f;
+        public float SleepTime { get; set; } = 300f;
 
         public void Abort()
         {
             On.Character.IsEncumbered -= Character_IsEncumbered;
+            m_dynamicBehaviour.Abort();
         }
 
         public void Configure(MobAIBase aiBase, StateMachine<string, string> brain, string parentState)
@@ -62,7 +66,15 @@ namespace RagnarsRokare.Factions
             m_sleepBehaviour.Configure(aiBase, brain, State.DynamicBehaviour);
             m_sleepBehaviour.SleepUntilMorning = true;
 
-            m_dynamicBehaviour = m_sleepBehaviour;
+            m_eatingBehaviour = new DynamicEatingBehaviour();
+            m_eatingBehaviour.SuccessState = State.Main;
+            m_eatingBehaviour.FailState = State.Main;
+            m_eatingBehaviour.HungryTimeout = 60f;
+            m_eatingBehaviour.Configure(aiBase, brain, State.DynamicBehaviour);
+
+
+
+            m_sleepTimer = Time.time + SleepTime;
 
             brain.Configure(State.Main)
                .InitialTransition(State.Wander)
@@ -77,6 +89,7 @@ namespace RagnarsRokare.Factions
             brain.Configure(State.Sit)
                 .SubstateOf(State.Main)
                 .Permit(Trigger.RandomWalk, State.Wander)
+                .Permit(Trigger.ChangeDynamicBehaviour, State.DynamicBehaviour)
                 .OnEntry(t =>
                 {
                     if (UnityEngine.Random.Range(0f, 100f) <= RandomCommentChance)
@@ -85,7 +98,8 @@ namespace RagnarsRokare.Factions
                     }
                     _currentStateTimeout = Time.time + StateTimeout;
                     aiBase.Character.GetComponentInChildren<Animator>().SetTrigger("Laydown");
-                    //EmoteManager.StartEmote(aiBase.NView, EmoteManager.Emotes.Sit, false);
+                    EmoteManager.StartEmote(aiBase.NView, EmoteManager.Emotes.Sit, false);
+                    Debug.Log($"{aiBase.Character.m_name}: Swithing to Sit.");
                 })
                 .OnExit(t =>
                 {
@@ -94,7 +108,8 @@ namespace RagnarsRokare.Factions
 
             brain.Configure(State.Wander)
                 .SubstateOf(State.Main)
-                .Permit(Trigger.StartDynamicBehaviour, State.DynamicBehaviour)
+                .Permit(Trigger.ChangeDynamicBehaviour, State.DynamicBehaviour)
+                .Permit(Trigger.SitDown, State.Sit)
                 .OnEntry(t =>
                 {
                     if (UnityEngine.Random.Range(0f, 100f) <= RandomCommentChance)
@@ -105,6 +120,7 @@ namespace RagnarsRokare.Factions
 
                     _currentStateTimeout = Time.time + StateTimeout;
                     m_targetPosition = GetRandomPointInRadius(aiBase.HomePosition, 2f);
+                    Debug.Log($"{aiBase.Character.m_name}: Swithing to Wander.");
                 })
                 .OnExit(t =>
                 {
@@ -113,18 +129,18 @@ namespace RagnarsRokare.Factions
                 });
 
             brain.Configure(State.DynamicBehaviour)
-                .SubstateOf(State.Main)
+                .SubstateOf(State.Wander)
                 .PermitDynamic(Trigger.StartDynamicBehaviour, () => m_dynamicBehaviour.StartState)
                 .PermitReentry(Trigger.ChangeDynamicBehaviour)
                 .OnEntry(t =>
                 {
                     Jotunn.Logger.LogDebug("DynamicBehaviour.OnEntry()");
-                    NextDynamicBehaviour(aiBase);
+                    Debug.Log($"{aiBase.Character.m_name}: Swithing to {m_dynamicBehaviour}");
                     brain.Fire(Trigger.StartDynamicBehaviour);
                 });
         }
 
-        private void NextDynamicBehaviour(MobAIBase aiBase)
+        private void SayRandomThing(Character npc)
         {
             if (m_dynamicBehaviour != null)
             {
@@ -133,18 +149,6 @@ namespace RagnarsRokare.Factions
                 m_dynamicBehaviour.Abort();
             }
             if (EnvMan.instance.IsNight())
-            {
-                m_dynamicBehaviour = m_sleepBehaviour;
-            }
-            else return;
-            var newBehaviour = m_dynamicBehaviour;
-            Jotunn.Logger.LogDebug($"{aiBase.Character.m_name}: Swithing to {newBehaviour}");
-            aiBase.Brain.Fire(Trigger.ChangeDynamicBehaviour);
-            return;
-        }
-
-        private void SayRandomThing(Character npc)
-        {
             int index = UnityEngine.Random.Range(0, Comments.Length);
             npc.GetComponent<Talker>().Say(Talker.Type.Normal, Comments[index]);
         }
@@ -156,22 +160,60 @@ namespace RagnarsRokare.Factions
 
         public void Update(MobAIBase instance, float dt)
         {
-            
+
+            // Update eating
+            m_eatingBehaviour.Update(instance, dt);
+            if (m_dynamicBehaviour == m_eatingBehaviour)
+            {
+                return;
+            }
+                m_dynamicBehaviour = m_sleepBehaviour;
+            }
+            else return;
+            var newBehaviour = m_dynamicBehaviour;
+            Jotunn.Logger.LogDebug($"{aiBase.Character.m_name}: Swithing to {newBehaviour}");
+            aiBase.Brain.Fire(Trigger.ChangeDynamicBehaviour);
+            return;
+        }
+
+            if (instance.Brain.IsInState(State.DynamicBehaviour))
+            {
+                m_dynamicBehaviour.Update(instance, dt);
+                return;
+            }
+
+            if (m_eatingBehaviour.IsHungry(instance.IsHurt))
+            {
+                m_dynamicBehaviour = m_eatingBehaviour;
+                instance.Brain.Fire(Trigger.ChangeDynamicBehaviour);
+                return;
+            }
+
+            if (Time.time > m_sleepTimer)
+            {
+                m_dynamicBehaviour = m_sleepBehaviour;
+                instance.Brain.Fire(Trigger.ChangeDynamicBehaviour);
+                return;
+            }
+
             if (instance.Brain.IsInState(State.Wander))
             {
                 if (Time.time > _currentStateTimeout)
                 {
-                    instance.Brain.Fire(Trigger.StartDynamicBehaviour);
+                    instance.Brain.Fire(Trigger.SitDown);
                 }
                 instance.MoveAndAvoidFire(m_targetPosition, dt, 0f);
                 return;
             }
-            
-            if (instance.Brain.IsInState(State.DynamicBehaviour))
-            {
-                m_dynamicBehaviour.Update(instance, dt);
-            }
 
+            if (instance.Brain.IsInState(State.Sit))
+            {
+                if (Time.time > _currentStateTimeout)
+                {
+                    instance.Brain.Fire(Trigger.RandomWalk);
+                }
+                return;
+            }
         }
 
         private Vector3 GetRandomPointInRadius(Vector3 center, float radius)

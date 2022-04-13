@@ -12,19 +12,13 @@ namespace RagnarsRokare.Factions
     public class NpcAI : MobAI.MobAIBase, IMobAIType
     {
         // Timers
-        private float m_triggerTimer;
-        private float m_stuckInIdleTimer;
         private float m_calculateComfortTimer;
-        private float m_fleeTimer;
         private float m_dynamicBehaviourTimer;
 
         // Settings
         public float FleeTimeout { get; private set; } = 10f;
         public float DynamicBehaviourTime { get; set; } = 20f;
         // Behaviours
-        readonly EatingBehaviour eatingBehaviour;
-        readonly SearchForItemsBehaviour searchForItemsBehaviour;
-        readonly IFightBehaviour fightBehaviour;
         private IDynamicBehaviour m_dynamicBehaviour;
         private ApathyBehaviour m_apathyBehaviour;
         private HopelessBehaviour m_hopelessBehaviour;
@@ -43,7 +37,6 @@ namespace RagnarsRokare.Factions
 
         public class State
         {
-            public const string Idle = "Idle";
             public const string Follow = "Follow";
             public const string Fight = "Fight";
             public const string Flee = "Flee";
@@ -67,27 +60,6 @@ namespace RagnarsRokare.Factions
             public const string StopDynamicBehaviour = "StopDynamicBehaviour";
         }
 
-        public int HungerLevel
-        {
-            get
-            {
-                if (int.TryParse(NView.GetZDO()?.GetString(Misc.Constants.Z_HungerLevel), out int result))
-                {
-                    return result;
-                }
-                return 0;
-            }
-            set
-            {
-                var zdo = NView.GetZDO();
-                if (zdo?.IsOwner() ?? false)
-                {
-                    Jotunn.Logger.LogDebug($"Set hungerlevel to {value}");
-                    zdo.Set(Misc.Constants.Z_HungerLevel, value);
-                }
-            }
-        }
-
         public int ComfortLevel {get; set;} = 0;
 
         public float MotivationLevel { get; set; } = 0;
@@ -104,89 +76,46 @@ namespace RagnarsRokare.Factions
         public NpcAI() : base()
         { }
 
-        public NpcAI(MonsterAI vanillaAI, NpcAIConfig config) : base(vanillaAI, State.Idle, config)
+        public NpcAI(MonsterAI vanillaAI, NpcAIConfig config) : base(vanillaAI, State.Root, config)
         {
             UpdateTrigger = Brain.SetTriggerParameters<float>(Trigger.Update);
-            m_containers = new MaxStack<Container>(Intelligence);
+            Containers = new MaxStack<Container>(Intelligence);
+            AcceptedContainerNames = new string[] { "piece_chest_wood" };
             m_config = config;
-             m_animator = Character.GetComponentInChildren<Animator>();
+            m_animator = Character.GetComponentInChildren<Animator>();
 
             m_hopelessBehaviour = new HopelessBehaviour();
-            m_hopelessBehaviour.SuccessState = State.Idle;
-            m_hopelessBehaviour.FailState = State.Idle;
+            m_hopelessBehaviour.SuccessState = State.Root;
+            m_hopelessBehaviour.FailState = State.Root;
             m_hopelessBehaviour.Configure(this, Brain, State.DynamicBehaviour);
 
             m_apathyBehaviour = new ApathyBehaviour();
-            m_apathyBehaviour.SuccessState = State.Idle;
-            m_apathyBehaviour.FailState = State.Idle;
+            m_apathyBehaviour.SuccessState = State.Root;
+            m_apathyBehaviour.FailState = State.Root;
             m_apathyBehaviour.Configure(this, Brain, State.DynamicBehaviour);
 
-            eatingBehaviour = new EatingBehaviour
-            {
-                HungryTimeout = 60f,
-                SearchForItemsState = State.SearchForItems,
-                SuccessState = State.Idle,
-                FailState = State.Idle,
-                HealPercentageOnConsume = 0.2f
-            };
-            eatingBehaviour.Configure(this, Brain, State.Hungry);
-
-            searchForItemsBehaviour = new SearchForItemsBehaviour();
-            searchForItemsBehaviour.Configure(this, Brain, State.SearchForItems);
-            fightBehaviour = Activator.CreateInstance(FightingBehaviourSelector.Invoke(this)) as IFightBehaviour;
-            fightBehaviour.Configure(this, Brain, State.Fight);
-
             ConfigureRoot();
-            ConfigureHungry();
-            ConfigureIdle();
-            ConfigureSearchForItems();
-            ConfigureFight();
-            ConfigureFlee();
             ConfigureDynamicBehaviour();
         }
 
         private void ConfigureRoot()
         {
             Brain.Configure(State.Root)
-                .InitialTransition(State.Idle)
-                .PermitIf(Trigger.TakeDamage, State.Fight, () => !Brain.IsInState(State.Flee) && !Brain.IsInState(State.Fight) && (TimeSinceHurt < 20.0f || Common.Alarmed(Instance, base.Mobility)) && MotivationManager.CalculateMotivation(NView.GetZDO(), ComfortLevel) > 2)
-                .PermitIf(Trigger.TakeDamage, State.Flee, () => !Brain.IsInState(State.Flee) && !Brain.IsInState(State.Fight) && TimeSinceHurt < 20.0f && MotivationManager.CalculateMotivation(NView.GetZDO(), ComfortLevel) > 0 && MotivationManager.CalculateMotivation(NView.GetZDO(), ComfortLevel) <= 2)
+                .InitialTransition(State.DynamicBehaviour)
                 .PermitIf(Trigger.ChangeDynamicBehaviour, State.DynamicBehaviour, () => !Brain.IsInState(State.DynamicBehaviour));
-        }
-
-        private void ConfigureHungry()
-        {
-            Brain.Configure(State.Hungry)
-                .SubstateOf(State.Root)
-                .OnExit(t =>
-                {
-                    HungerLevel = eatingBehaviour.FailedToFindFood;
-                });
-        }
-
-        private void ConfigureIdle()
-        {
-            Brain.Configure(State.Idle)
-                .SubstateOf(State.Root)
-                .Permit(Trigger.ChangeDynamicBehaviour, State.DynamicBehaviour)
-                .PermitIf(Trigger.Hungry, eatingBehaviour.StartState, () => eatingBehaviour.IsHungry(IsHurt) && MotivationManager.CalculateMotivation(NView.GetZDO(), ComfortLevel) > 1)
-                .OnEntry(t =>
-                {
-                    m_stuckInIdleTimer = 0;
-                    UpdateAiStatus(State.Idle);
-                });
         }
 
         private void ConfigureDynamicBehaviour()
         {
             Brain.Configure(State.DynamicBehaviour)
-                .SubstateOf(State.Idle)
+                .SubstateOf(State.Root)
                 .PermitDynamic(Trigger.StartDynamicBehaviour, () => m_dynamicBehaviour.StartState)
-                .Permit(Trigger.StopDynamicBehaviour, State.Idle)
+                .Permit(Trigger.StopDynamicBehaviour, State.Root)
                 .PermitReentry(Trigger.ChangeDynamicBehaviour)
                 .OnEntry(t =>
                 {
                     Jotunn.Logger.LogDebug("DynamicBehaviour.OnEntry()");
+                    Debug.Log($"{Character.m_name}: Swithing Dynamicbehaviour to {m_dynamicBehaviour}.");
                     Brain.Fire(Trigger.StartDynamicBehaviour);
                 });
         }
@@ -219,91 +148,10 @@ namespace RagnarsRokare.Factions
             return;
         }
 
-        private void ConfigureFight()
-        {
-            Brain.Configure(State.Fight)
-                .SubstateOf(State.Root)
-                .Permit(Trigger.Fight, fightBehaviour.StartState)
-                .OnEntry(t =>
-                {
-                    fightBehaviour.SuccessState = State.Idle;
-                    fightBehaviour.FailState = State.Flee;
-                    fightBehaviour.MobilityLevel = base.Mobility;
-                    fightBehaviour.AgressionLevel = base.Agressiveness;
-                    fightBehaviour.AwarenessLevel = base.Awareness;
-
-                    Brain.Fire(Trigger.Fight);
-                })
-                .OnExit(t =>
-                {
-                    ItemDrop.ItemData currentWeapon = (Character as Humanoid).GetCurrentWeapon();
-                    if (null != currentWeapon)
-                    {
-                        (Character as Humanoid).UnequipItem(currentWeapon);
-                    }
-                    Invoke<MonsterAI>(Instance, "SetAlerted", false);
-                });
-        }
-
-        private void ConfigureFlee()
-        {
-            Brain.Configure(State.Flee)
-                .SubstateOf(State.Root)
-                .PermitIf(UpdateTrigger, State.Idle, (arg) => (m_fleeTimer += arg) > FleeTimeout && !Common.Alarmed(Instance, Mathf.Max(1, base.Awareness - 1)))
-                .OnEntry(t =>
-                {
-                    Debug.Log($"{Instance.name} enter Flee state ");
-                    m_fleeTimer = 0f;
-                    UpdateAiStatus(State.Flee);
-                    Instance.Alert();
-                })
-                .OnExit(t =>
-                {
-                    Invoke<MonsterAI>(Instance, "SetAlerted", false);
-                    Attacker = null;
-                    StopMoving();
-                });
-        }
-
-        private void ConfigureSearchForItems()
-        {
-            Brain.Configure(State.SearchForItems.ToString())
-                .SubstateOf(State.Root)
-                .Permit(Trigger.SearchForItems, searchForItemsBehaviour.StartState)
-                .OnEntry(t =>
-                {
-                    Common.Dbgl($"{Character.GetHoverName()}:ConfigureSearchContainers Initiated", true, "NPC");
-                    searchForItemsBehaviour.KnownContainers = m_containers;
-                    searchForItemsBehaviour.Items = t.Parameters[0] as IEnumerable<ItemDrop.ItemData>;
-                    searchForItemsBehaviour.AcceptedContainerNames = m_config.AcceptedContainers;
-                    searchForItemsBehaviour.SuccessState = t.Parameters[1] as string;
-                    searchForItemsBehaviour.FailState = t.Parameters[2] as string;
-                    Brain.Fire(Trigger.SearchForItems.ToString());
-                });
-        }
-
         public override void UpdateAI(float dt)
         {
             base.UpdateAI(dt);
             EmoteManager.UpdateEmote(NView, ref m_emoteState, ref m_emoteID, ref m_animator);
-
-            m_triggerTimer += dt;
-            if (m_triggerTimer < 0.1f) return;
-
-            m_triggerTimer = 0f;
-
-            // Update eating behaviours
-            eatingBehaviour.Update(this, dt);
-
-            // Update runtime triggers
-            Brain.Fire(Trigger.Hungry);
-            Brain.Fire(Trigger.TakeDamage);
-            Brain.Fire(Trigger.Follow);
-
-            //if (Time.time > m_dynamicBehaviourTimer)
-            //{
-            //    NextDynamicBehaviour();
-            //}
 
             if (Time.time > m_calculateComfortTimer)
             {
@@ -321,38 +169,7 @@ namespace RagnarsRokare.Factions
                     SelectDynamicBehaviour(motivation);
                 }
             }
-
-            if (Brain.IsInState(State.DynamicBehaviour))
-            {
-                m_dynamicBehaviour.Update(this, dt);
-            }
-
-            if (Brain.IsInState(State.SearchForItems))
-            {
-                searchForItemsBehaviour.Update(this, dt);
-                return;
-            }
-
-            if (Brain.IsInState(State.Fight))
-            {
-                fightBehaviour.Update(this, dt);
-                return;
-            }
-
-            if (Brain.IsInState(State.Flee))
-            {
-                var fleeFrom = Attacker == null ? Character.transform.position : Attacker.transform.position;
-                Invoke<MonsterAI>(Instance, "Flee", dt, fleeFrom);
-                return;
-            }
-
-            if (Brain.State == State.Idle && m_startPosition != null)
-            {
-                m_stuckInIdleTimer += dt;
-                Utils.Invoke<BaseAI>(Instance, "RandomMovement", dt, m_startPosition);
-                return;
-            }
-
+            m_dynamicBehaviour.Update(this, dt);
         }
 
         private int CalculateComfortLevel()

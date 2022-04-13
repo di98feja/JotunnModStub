@@ -93,7 +93,7 @@ namespace RagnarsRokare.Factions
                 .Permit(Trigger.StandUp, SuccessState)
                 .OnEntry(t =>
                 {
-                    Jotunn.Logger.LogDebug($"{aiBase.Character.GetHoverName()} going to sleep");
+                    Debug.Log($"{aiBase.Character.GetHoverName()} going to sleep");
 					// Trigger lay down animation
 					var bedZDOId = aiBase.NView.GetZDO().GetZDOID(Misc.Constants.Z_NpcBedOwnerId);
 					if (bedZDOId == ZDOID.None)
