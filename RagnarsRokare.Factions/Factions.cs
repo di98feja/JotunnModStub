@@ -34,7 +34,7 @@ namespace RagnarsRokare.Factions
             LoadAssets();
             InitInputs();
 
-            Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), null);
+            Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), PluginGUID);
 
             MobAI.MobManager.RegisterMobAI(typeof(NpcAI));
             ZoneManager.OnVanillaLocationsAvailable += LocationsManager.SetupNpcLocations;

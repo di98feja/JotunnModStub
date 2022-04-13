@@ -34,7 +34,30 @@ namespace RagnarsRokare.Factions
                 return;
             }
 
-            ShowErrandDialog(npcZdo, Player.m_localPlayer);
+            ShowAccessInventoryDialog(npc, Player.m_localPlayer);
+
+//            ShowErrandDialog(npcZdo, Player.m_localPlayer);
+        }
+
+        private static void ShowAccessInventoryDialog(Character npc, Player m_localPlayer)
+        {
+            string npcText = "Yes?";
+            var responses = new List<Response>();
+            responses.Add(new Response
+            {
+                Text = "Show me your inventory",
+                Callback = () =>
+                {
+                    InteractionPanel.SetActive(false);
+                    GUIManager.BlockInput(false);
+                    var npcInventory = npc.gameObject.GetComponent<NpcContainer>();
+                    npcInventory.NpcInteract(npc as Humanoid);
+                }
+            });
+
+            CreateInteractionDialog(npcText, responses.ToArray());
+            InteractionPanel.SetActive(true);
+            GUIManager.BlockInput(true);
         }
 
         private static void ShowErrandDialog(ZDO npcZdo, Player player)
