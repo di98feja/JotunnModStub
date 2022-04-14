@@ -123,7 +123,7 @@ namespace RagnarsRokare.Factions
                     instance.Brain.Fire(Trigger.SitDown);
                     return;
                 }
-                instance.MoveAndAvoidFire(m_targetPosition, dt, 0f);
+                instance.MoveAndAvoidFire(m_targetPosition, dt, 0f, false, true);
                 return;
             }
         }
