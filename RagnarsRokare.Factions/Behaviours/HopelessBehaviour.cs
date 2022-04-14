@@ -48,7 +48,7 @@ namespace RagnarsRokare.Factions
         public string StartState => State.Main;
         public string SuccessState { get; set; }
         public string FailState { get; set; }
-        public float StateTimeout { get; set; } = 10f;
+        public float StateTimeout { get; set; } = 10f + UnityEngine.Random.Range(0f, 10f);
         public float RandomCommentChance { get; set; } = 25f;
 
         public void Abort()
@@ -93,9 +93,8 @@ namespace RagnarsRokare.Factions
                         SayRandomThing(aiBase.Character);
                     }
                     _currentStateTimeout = Time.time + StateTimeout;
-                    aiBase.Character.GetComponentInChildren<Animator>().SetTrigger("Laydown");
                     EmoteManager.StartEmote(aiBase.NView, EmoteManager.Emotes.Sit, false);
-                    Debug.Log($"{aiBase.Character.m_name}: Swithing to Sit.");
+                    Debug.Log($"{aiBase.Character.m_name}: Switching to Sit.");
                 })
                 .OnExit(t =>
                 {
@@ -116,7 +115,7 @@ namespace RagnarsRokare.Factions
 
                     _currentStateTimeout = Time.time + StateTimeout;
                     m_targetPosition = GetRandomPointInRadius(aiBase.HomePosition, 2f);
-                    Debug.Log($"{aiBase.Character.m_name}: Swithing to Wander.");
+                    Debug.Log($"{aiBase.Character.m_name}: Switching to Wander.");
                 })
                 .OnExit(t =>
                 {
@@ -131,7 +130,7 @@ namespace RagnarsRokare.Factions
                 .OnEntry(t =>
                 {
                     Jotunn.Logger.LogDebug("DynamicBehaviour.OnEntry()");
-                    Debug.Log($"{aiBase.Character.m_name}: Swithing to {m_dynamicBehaviour}");
+                    Debug.Log($"{aiBase.Character.m_name}: Switching to {m_dynamicBehaviour}");
                     brain.Fire(Trigger.StartDynamicBehaviour);
                 });
         }
@@ -149,7 +148,6 @@ namespace RagnarsRokare.Factions
 
         public void Update(MobAIBase instance, float dt)
         {
-
             // Update eating
             m_eatingBehaviour.Update(instance, dt);
             if (m_dynamicBehaviour == m_eatingBehaviour)
@@ -182,7 +180,7 @@ namespace RagnarsRokare.Factions
                 {
                     instance.Brain.Fire(Trigger.SitDown);
                 }
-                instance.MoveAndAvoidFire(m_targetPosition, dt, 0f);
+                instance.MoveAndAvoidFire(m_targetPosition, dt, 0f, false, true);
                 return;
             }
 
