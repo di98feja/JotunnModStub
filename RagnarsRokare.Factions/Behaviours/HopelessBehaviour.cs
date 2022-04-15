@@ -13,7 +13,7 @@ namespace RagnarsRokare.Factions
         private IDynamicBehaviour m_dynamicBehaviour;
         private SleepBehaviour m_sleepBehaviour;
         private DynamicEatingBehaviour m_eatingBehaviour;
-        private MaxStack<Container> m_containers;
+
 
         private class State
         {

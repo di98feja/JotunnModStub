@@ -90,7 +90,7 @@ namespace RagnarsRokare.Factions
         public NpcAI(MonsterAI vanillaAI, NpcAIConfig config) : base(vanillaAI, State.Root, config)
         {
             UpdateTrigger = Brain.SetTriggerParameters<float>(Trigger.Update);
-            Containers = new MaxStack<Container>(Intelligence);
+            KnownContainers = new MaxStack<Container>(Intelligence);
             AcceptedContainerNames = new string[] { "piece_chest_wood" };
             m_config = config;
             m_animator = Character.GetComponentInChildren<Animator>();
