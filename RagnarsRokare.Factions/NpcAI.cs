@@ -62,7 +62,18 @@ namespace RagnarsRokare.Factions
 
         public int ComfortLevel {get; set;} = 0;
 
-        public float MotivationLevel { get; set; } = 0;
+        public float MotivationLevel 
+        { 
+            get
+            {
+                return NView.GetZDO().GetFloat(Misc.Constants.Z_MotivationLevel);
+            }
+            set
+            {
+                if (!NView.IsOwner() || !NView.IsValid()) return;
+                NView.GetZDO().Set(Misc.Constants.Z_MotivationLevel, value);
+            }
+        }
 
 
         public bool HasBed()
@@ -200,7 +211,21 @@ namespace RagnarsRokare.Factions
                 return 2; // Have roof but no fire
             }
 
-            return Helpers.GetComfortFromNearbyPieces(bed.transform.position) + 2;
+            var comfort = Helpers.GetComfortFromNearbyPieces(bed.transform.position) + 2;
+            var builder = Helpers.WhoBuiltMostPiecesNearPosition(bed.transform.position);
+            if (builder != default && comfort >= Misc.Constants.Motivation_Hopeless)
+            {
+                var player = Player.GetPlayer(builder.builderId);
+                if (player != null)
+                {
+                    var playerFaction = FactionManager.GetPlayerFaction(player);
+                    if (StandingsManager.GetStandingTowards(NView.GetZDO(), playerFaction) == Misc.Constants.Standing_Suspicious)
+                    {
+                        StandingsManager.SetStandingTowards(NView.GetZDO(), playerFaction, Misc.Constants.Standing_MinimumInteraction);
+                    }
+                }
+            }
+            return comfort;
         }
 
         public override void Follow(Player player)

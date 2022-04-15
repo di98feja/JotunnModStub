@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
 
 namespace RagnarsRokare.Factions
 {
@@ -14,6 +9,11 @@ namespace RagnarsRokare.Factions
             float sum = 0f + comfortLevel;
 
             return Math.Max(sum, 0f);
+        }
+
+        public static float GetMotivation(ZDO npcZdo)
+        {
+            return npcZdo.GetFloat(Misc.Constants.Z_MotivationLevel);
         }
     }
 }

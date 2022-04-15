@@ -14,7 +14,7 @@
 
             m_npc = gameObject.GetComponent<Humanoid>();
             On.InventoryGui.OnRightClickItem += InventoryGui_OnRightClickItem;
-            On.Humanoid.EquipItem += Humanoid_EquipItem;
+            //On.Humanoid.EquipItem += Humanoid_EquipItem;
         }
 
 		private new void RPC_OpenRespons(long uid, bool granted)

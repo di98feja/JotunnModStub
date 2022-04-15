@@ -54,6 +54,19 @@ namespace RagnarsRokare.Factions
             return GetFaction(playerFactionId);
         }
 
+        public static Faction GetNpcFaction(ZDO npcZdo)
+        {
+            var factionId = npcZdo.GetString(Misc.Constants.Z_Faction);
+            return GetFaction(factionId);
+        }
+
+        public static bool IsSameFaction(ZDO npcZdo, Player player)
+        {
+            var playerFaction = GetPlayerFaction(player);
+            var npcFaction = GetNpcFaction(npcZdo);
+            return playerFaction.FactionId == npcFaction.FactionId; 
+        }
+
         public static void SetPlayerFaction(Player player, string factionId)
         {
             var playerZdo = player.m_nview.GetZDO();
