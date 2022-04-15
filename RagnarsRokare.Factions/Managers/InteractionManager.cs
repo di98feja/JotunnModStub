@@ -21,11 +21,11 @@ namespace RagnarsRokare.Factions
                 return;
             }
             var playerStanding = StandingsManager.GetStandingTowards(npcZdo, FactionManager.GetLocalPlayerFaction());
-            //if (playerStanding <= Misc.Constants.Standing_MinimumInteraction)
-            //{
-            //    Logger.LogDebug($"{npc.GetHoverName()}: Player standing to low: {playerStanding}");
-            //    return;
-            //}
+            if (playerStanding < Misc.Constants.Standing_MinimumInteraction)
+            {
+                Logger.LogDebug($"{npc.GetHoverName()}: Player standing to low: {playerStanding}");
+                return;
+            }
 
             if (!HasGotRealName(npcZdo))
             {
@@ -34,15 +34,26 @@ namespace RagnarsRokare.Factions
                 return;
             }
 
-            ShowAccessInventoryDialog(npc, Player.m_localPlayer);
-
-//            ShowErrandDialog(npcZdo, Player.m_localPlayer);
-        }
-
-        private static void ShowAccessInventoryDialog(Character npc, Player m_localPlayer)
-        {
             string npcText = "Yes?";
             var responses = new List<Response>();
+
+            var motivationLevel = npcZdo.GetFloat(Misc.Constants.Z_MotivationLevel);
+            if (motivationLevel > Misc.Constants.Motivation_Apathy)
+            {
+                AddErrandDialog(npcZdo, Player.m_localPlayer, responses);
+            }
+            if (FactionManager.IsSameFaction(npcZdo, Player.m_localPlayer))
+            {
+                AddAccessInventoryDialog(npc, Player.m_localPlayer, responses);
+            }
+
+            CreateInteractionDialog(npcText, responses.ToArray());
+            InteractionPanel.SetActive(true);
+            GUIManager.BlockInput(true);
+        }
+
+        private static void AddAccessInventoryDialog(Character npc, Player m_localPlayer, List<Response> responses)
+        {
             responses.Add(new Response
             {
                 Text = "Show me your inventory",
@@ -54,16 +65,42 @@ namespace RagnarsRokare.Factions
                     npcInventory.NpcInteract(npc as Humanoid);
                 }
             });
+        }
 
-            CreateInteractionDialog(npcText, responses.ToArray());
-            InteractionPanel.SetActive(true);
-            GUIManager.BlockInput(true);
+        private static void AddErrandDialog(ZDO npcZdo, Player player, List<Response> responses)
+        {
+            if (ErrandsManager.HasErrand(npcZdo, player))
+            {
+                responses.Add(new Response
+                {
+                    Text = "Regarding your request...",
+                    Callback = () =>
+                    {
+                        InteractionPanel.SetActive(false);
+                        GUIManager.BlockInput(false);
+                        ShowErrandDialog(npcZdo, player);
+                    }
+                });
+            }
+            else
+            {
+                responses.Add(new Response
+                {
+                    Text = "Do you need any help?",
+                    Callback = () =>
+                    {
+                        InteractionPanel.SetActive(false);
+                        GUIManager.BlockInput(false);
+                        ShowErrandDialog(npcZdo, player);
+                    }
+                });
+            }
         }
 
         private static void ShowErrandDialog(ZDO npcZdo, Player player)
         {
             string npcText = String.Empty;
-            var responses = new List<Response>();
+            List<Response> responses = new List<Response>();
             if (ErrandsManager.HasErrand(npcZdo, player))
             {
                 npcText = "Yes? How did it go?";

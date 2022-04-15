@@ -54,5 +54,27 @@ namespace RagnarsRokare.Factions
             return num;
         }
 
+        public static (long builderId, int count) WhoBuiltMostPiecesNearPosition(Vector3 position)
+        {
+            var builders = new Dictionary<long, int>();
+            List<Piece> list = new List<Piece>();
+            Piece.GetAllPiecesInRadius(position, 5f, list);
+            foreach (Piece piece in list)
+            {
+                long creator = piece.GetCreator();
+                if (creator == 0) continue;
+                if (builders.ContainsKey(creator))
+                {
+                    builders[creator]++;
+                }
+                else
+                { 
+                    builders.Add(creator, 1); 
+                }
+            }
+            if (builders.Count == 0) return default;
+            var topBuilder = builders.OrderByDescending(b => b.Value).First();
+            return (topBuilder.Key, topBuilder.Value);
+        }
     }
 }

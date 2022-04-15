@@ -44,7 +44,7 @@ namespace RagnarsRokare.Factions
                     Id = 2,
                     RequestString = $"I was chased by some boars the other day and then they ate all my berries. \nCould you teach them a lesson?",
                     RequestItem = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Trophie, "TrophyBoar").FirstOrDefault()?.m_itemData,
-                    RequestItemAmount = 2,
+                    RequestItemAmount = 1,
                     CompletedString = "Ha! These won't eat any more of my berries! You have my gratitude.",
                     CanceledString = "They too much for you?  I really thought you could handle some pigs."
                 },
@@ -55,6 +55,15 @@ namespace RagnarsRokare.Factions
                     RequestItem = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Consumable, "Honey").FirstOrDefault()?.m_itemData,
                     RequestItemAmount = 2,
                     CompletedString = "*gets a dreamy look* Yes!  It is every bit as good as I remembered it. \nThank you, thank you!",
+                    CanceledString = "No? You could not find any?"
+                },
+                new Errand
+                {
+                    Id = 4,
+                    RequestString = $"I need to patch my shirt. \nIf you could bring me some leather scraps I would be most grateful!",
+                    RequestItem = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Material, "LeatherScraps").FirstOrDefault()?.m_itemData,
+                    RequestItemAmount = 5,
+                    CompletedString = "Ahh!  Yes, these will do nicely. \nThank you!",
                     CanceledString = "No? You could not find any?"
                 }
             };
