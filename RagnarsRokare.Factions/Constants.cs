@@ -20,9 +20,10 @@
 
         internal const string Z_FactionStandings = "RR_FactionStandings";
         internal const string Z_Faction = "RR_Faction";
+        internal const string Z_FactionLevel = "RR_FactionLevel";
         internal const string Z_HungerLevel = "RR_HungerLevel";
         internal const string Z_ComfortLevel = "RR_ComfortLevel";
-        internal const string Z_MotivationLevel = "RR_ComfortLevel";
+        internal const string Z_MotivationLevel = "RR_MotivationLevel";
         internal const string Z_NpcBedOwnerId = "RR_NpcBedOwnerId";
         internal const string Z_NpcActiveErrand = "RR_NpcActiveErrandId";
         internal const string Z_PlayerActiveErrands = "RR_PLayerActiveErrands";

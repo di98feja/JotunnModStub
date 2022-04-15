@@ -46,10 +46,28 @@ namespace RagnarsRokare.Factions
             {
                 AddAccessInventoryDialog(npc, Player.m_localPlayer, responses);
             }
+            else if (playerStanding >= Misc.Constants.Standing_Neutral)
+            {
+                AddJoinFactionOfferDialog(npcZdo, Player.m_localPlayer, responses);
+            }
 
             CreateInteractionDialog(npcText, responses.ToArray());
             InteractionPanel.SetActive(true);
             GUIManager.BlockInput(true);
+        }
+
+        private static void AddJoinFactionOfferDialog(ZDO npcZdo, Player player, List<Response> responses)
+        {
+            responses.Add(new Response
+            {
+                Text = "I have an offer for you...",
+                Callback = () =>
+                {
+                    InteractionPanel.SetActive(false);
+                    GUIManager.BlockInput(false);
+                    ShowJoinFactionDialog(npcZdo, player);
+                }
+            });
         }
 
         private static void AddAccessInventoryDialog(Character npc, Player m_localPlayer, List<Response> responses)
@@ -95,6 +113,40 @@ namespace RagnarsRokare.Factions
                     }
                 });
             }
+        }
+
+        private static void ShowJoinFactionDialog(ZDO npcZdo, Player player)
+        {
+            string npcText = "What kind of offer?";
+            List<Response> responses = new List<Response>();
+            responses.Add(new Response
+            {
+                Text = "We could build a good life here if we stand together. Would you like to join my ranks?",
+                Callback = () =>
+                {
+                    InteractionPanel.SetActive(false);
+                    GUIManager.BlockInput(false);
+                    CreateInteractionDialog("You have brought me back from deepest despair and showed me kindness in this unforgiving place. I will gladly join you in your endeavours!", new Response[]
+                           {
+                                new Response
+                                {
+                                    Text = "Excellent!",
+                                    Callback = () =>
+                                    {
+                                        FactionManager.SetFaction(npcZdo, FactionManager.GetPlayerFaction(player).FactionId);
+                                        InteractionPanel.SetActive(false);
+                                        GUIManager.BlockInput(false);
+                                    }
+                                }
+                           });
+                    InteractionPanel.SetActive(true);
+                    GUIManager.BlockInput(true);
+                    InteractionPanel.SetActive(true);
+                }
+            });
+            CreateInteractionDialog(npcText, responses.ToArray());
+            InteractionPanel.SetActive(true);
+            GUIManager.BlockInput(true);
         }
 
         private static void ShowErrandDialog(ZDO npcZdo, Player player)
@@ -212,7 +264,7 @@ namespace RagnarsRokare.Factions
                 }
             };
 
-            CreateInteractionDialog($"Greetings stranger, I am {npcZdo.GetString(Constants.Z_GivenName)}", new Response[] {response, response2});
+            CreateInteractionDialog($"Greetings stranger, I am {npcZdo.GetString(Constants.Z_GivenName)}", new Response[] { response, response2 });
             InteractionPanel.SetActive(true);
             GUIManager.BlockInput(true);
         }
