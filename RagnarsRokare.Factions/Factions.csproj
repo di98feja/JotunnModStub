@@ -120,6 +120,7 @@
     <Compile Include="NpcContainer.cs" />
     <Compile Include="Patches\Bed_patch.cs" />
     <Compile Include="Patches\Character_patches.cs" />
+    <Compile Include="Patches\Minimap_patches.cs" />
     <Compile Include="Patches\Tamable_patches.cs" />
     <Compile Include="Properties\IgnoreAccessModifiers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

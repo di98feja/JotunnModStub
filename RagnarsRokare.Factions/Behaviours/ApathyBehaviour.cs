@@ -85,7 +85,7 @@ namespace RagnarsRokare.Factions
                     On.Character.IsEncumbered += Character_IsEncumbered;
 
                     _currentStateTimeout = Time.time + StateTimeout;
-                    m_targetPosition = GetRandomPointInRadius(aiBase.HomePosition, 2f);
+                    m_targetPosition = GetRandomPointInRadius(aiBase.HomePosition, 1.5f);
                 })
                 .OnExit(t =>
                 {
