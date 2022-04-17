@@ -68,7 +68,6 @@ namespace RagnarsRokare.Factions
             m_eatingBehaviour = new DynamicEatingBehaviour();
             m_eatingBehaviour.SuccessState = State.Main;
             m_eatingBehaviour.FailState = State.Main;
-            m_eatingBehaviour.HungryTimeout = 60f;
             m_eatingBehaviour.Configure(aiBase, brain, State.DynamicBehaviour);
 
 
@@ -150,7 +149,7 @@ namespace RagnarsRokare.Factions
         {
             // Update eating
             m_eatingBehaviour.Update(instance, dt);
-            if (m_dynamicBehaviour == m_eatingBehaviour)
+            if (instance.Brain.IsInState(m_eatingBehaviour.StartState))    
             {
                 return;
             }
