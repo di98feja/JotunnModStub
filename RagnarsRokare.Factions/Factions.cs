@@ -31,13 +31,13 @@ namespace RagnarsRokare.Factions
 
         private void Awake()
         {
-            LoadAssets();
             InitInputs();
 
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), PluginGUID);
 
             MobAI.MobManager.RegisterMobAI(typeof(NpcAI));
-            ZoneManager.OnVanillaLocationsAvailable += LocationsManager.SetupNpcLocations;
+            On.ZoneSystem.PrepareNetViews += LocationsManager.PrepareNetViews;
+            On.ZoneSystem.PrepareRandomSpawns += LocationsManager.SetupNpcLocations;
 
             // Jotunn comes with MonoMod Detours enabled for hooking Valheim's code
             // https://github.com/MonoMod/MonoMod
@@ -79,6 +79,8 @@ namespace RagnarsRokare.Factions
 
             // Call this method so the original game method is invoked
             orig(self);
+
+            LoadAssets();
 
             // This code runs after Valheim's FejdStartup.Awake
             Jotunn.Logger.LogInfo("FejdStartup has awoken");

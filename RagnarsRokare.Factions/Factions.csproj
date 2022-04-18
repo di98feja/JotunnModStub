@@ -127,8 +127,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <EmbeddedResource Include="AssetBundles\npcbed" />
     <EmbeddedResource Include="AssetBundles\npc" />
+    <EmbeddedResource Include="AssetBundles\npcbed" />
     <None Include="packages.config" />
     <None Include="README.md" />
   </ItemGroup>

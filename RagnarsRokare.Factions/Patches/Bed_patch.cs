@@ -7,6 +7,7 @@
             orig(self);
             if (self.name.StartsWith("goblin_bed"))
             {
+                self.m_nview.GetZDO().m_persistent = true;
                 if (self.GetOwner() == 0L)
                 {
                     var npc = NpcManager.CreateRandomizedNpc(self.transform.position);

@@ -434,7 +434,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1223492141743099}
-  m_Mesh: {fileID: 4300000, guid: cc30ff7f8b3a65e439168cef6fd41802, type: 2}
+  m_Mesh: {fileID: 4300000, guid: 65c29cf3d7d54e747bc25daf0223ad39, type: 2}
 --- !u!23 &23714477421390062
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1748,6 +1748,7 @@ GameObject:
   - component: {fileID: 114380069387064261}
   - component: {fileID: 114480163507768686}
   - component: {fileID: 9004505587521425290}
+  - component: {fileID: 4464656668753753872}
   m_Layer: 10
   m_Name: npc_bed
   m_TagString: leaky
@@ -1785,8 +1786,8 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1.2, y: 0.7, z: 2.9}
-  m_Center: {x: 0, y: 0.3, z: 0}
+  m_Size: {x: 1.2, y: 0.4, z: 2.8}
+  m_Center: {x: 0, y: 0.18, z: 0}
 --- !u!114 &114380069387064261
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1891,6 +1892,80 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_spawnPoint: {fileID: 4014322423288302157}
   m_monsterCheckRadius: 20
+--- !u!114 &4464656668753753872
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1975882678849342}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80ef5ed3088bc6d4bbb5945bb10dfea3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_primaryTarget: 1
+  m_randomTarget: 1
+  m_targetNonPlayerBuilt: 1
+  m_icon: {fileID: 0}
+  m_name: Worn bed
+  m_description: 
+  m_enabled: 1
+  m_category: 3
+  m_isUpgrade: 0
+  m_comfort: 1
+  m_comfortGroup: 2
+  m_comfortObject: {fileID: 0}
+  m_groundPiece: 0
+  m_allowAltGroundPlacement: 0
+  m_groundOnly: 0
+  m_cultivatedGroundOnly: 0
+  m_waterPiece: 0
+  m_clipGround: 0
+  m_clipEverything: 0
+  m_noInWater: 1
+  m_notOnWood: 0
+  m_notOnTiltingSurface: 1
+  m_inCeilingOnly: 0
+  m_notOnFloor: 0
+  m_noClipping: 1
+  m_onlyInTeleportArea: 0
+  m_allowedInDungeons: 0
+  m_spaceRequirement: 0
+  m_repairPiece: 0
+  m_canBeRemoved: 1
+  m_allowRotatedOverlap: 0
+  m_onlyInBiome: 0
+  m_placeEffect:
+    m_effectPrefabs:
+    - m_prefab: {fileID: 5690478198082036002, guid: e2459c6835695584ab57553c100d2285,
+        type: 3}
+      m_enabled: 1
+      m_variant: -1
+      m_attach: 0
+      m_inheritParentRotation: 0
+      m_inheritParentScale: 0
+      m_randomRotation: 0
+      m_scale: 0
+      m_childTransform: 
+    - m_prefab: {fileID: 5690478198082036002, guid: e7fe879bd1bc87846a4fd2b83cd9d93e,
+        type: 3}
+      m_enabled: 1
+      m_variant: -1
+      m_attach: 0
+      m_inheritParentRotation: 0
+      m_inheritParentScale: 0
+      m_randomRotation: 0
+      m_scale: 0
+      m_childTransform: 
+  m_dlc: 
+  m_craftingStation: {fileID: 0}
+  m_resources:
+  - m_resItem: {fileID: 0}
+    m_amount: 0
+    m_amountPerLevel: 0
+    m_recover: 0
+  m_destroyedLootPrefab: {fileID: 0}
 --- !u!1 &1980106478750310
 GameObject:
   m_ObjectHideFlags: 0
@@ -2040,7 +2115,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2501911786025787254}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.437, z: 0}
+  m_LocalPosition: {x: 0, y: 0.17, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 4187819056157060}

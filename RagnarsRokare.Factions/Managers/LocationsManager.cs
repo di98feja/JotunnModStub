@@ -1,10 +1,7 @@
 ﻿using Jotunn.Managers;
 using Jotunn.Utils;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace RagnarsRokare.Factions
@@ -21,30 +18,39 @@ namespace RagnarsRokare.Factions
             m_npcBedPrefab = PrefabManager.Instance.GetPrefab("npc_bed");
             Jotunn.Logger.LogInfo($"Embedded resources: {string.Join(",", typeof(Factions).Assembly.GetManifestResourceNames())}");
 
+            PieceManager.Instance.AddPiece(new Jotunn.Entities.CustomPiece(m_npcBedPrefab, true, new Jotunn.Configs.PieceConfig { Name = "Npc bed" }));
+
+            var goblinBedPrefab = PrefabManager.Instance.GetPrefab("goblin_bed");
+            goblinBedPrefab.gameObject.AddComponent<Bed>();
+            var collider = goblinBedPrefab.GetComponent<Collider>() as BoxCollider;
+            collider.size = new Vector3(1.2f, 0.2f, 2.8f);
+
             embeddedResourceBundle.Unload(false);
         }
 
-        public static void SetupNpcLocations()
+        public static void SetupNpcLocations(On.ZoneSystem.orig_PrepareRandomSpawns orig, GameObject root, System.Collections.Generic.List<RandomSpawn> randomSpawns)
         {
-            var goblinBedPrefab = PrefabManager.Instance.GetPrefab("goblin_bed");
-            goblinBedPrefab.gameObject.AddComponent<Bed>();
+            orig(root, randomSpawns);
+        }
 
-            string[] npcLocations = new string[] { "WoodHouse1", "WoodHouse2", "WoodHouse5", "WoodHouse6", "WoodHouse7", "WoodHouse9", "WoodHouse10", "WoodHouse11", "WoodHouse13" };
-            foreach (var npcLocation in npcLocations)
+        internal static void PrepareNetViews(On.ZoneSystem.orig_PrepareNetViews orig, GameObject root, List<ZNetView> views)
+        {
+            string[] npcLocations = new string[] { "WoodHouse1", "WoodHouse2", "Farm" };
+            if (npcLocations.Contains(root.name))
             {
-                var loc = ZoneManager.Instance.GetZoneLocation(npcLocation);
-
-                var gb = loc.m_randomSpawns.Find(r => r.name == "goblin_bed");
-                if (gb)
+                RandomSpawn[] componentsInChildren = root.GetComponentsInChildren<RandomSpawn>(includeInactive: true);
+                var gbs = componentsInChildren.Where(c => c.name.StartsWith("goblin_bed"));
+                foreach (var goblinBed in gbs)
                 {
-                    gb.m_chanceToSpawn = 100f;
-                    var bh = loc.m_randomSpawns.Find(r => r.name == "beehive");
-                    if (bh)
-                    {
-                        bh.m_chanceToSpawn = 0f;
-                    }
+                    goblinBed.m_chanceToSpawn = 100f;
+                }
+                var bh = componentsInChildren.FirstOrDefault(r => r.name == "Beehive");
+                if (bh)
+                {
+                    bh.m_chanceToSpawn = 0f;
                 }
             }
+            orig(root, views);
         }
 
         private static void GetRecursiveGameObject(GameObject go, string name, List<GameObject> found)

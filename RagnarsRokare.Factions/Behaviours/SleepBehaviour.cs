@@ -16,8 +16,9 @@ namespace RagnarsRokare.Factions
         private Vector3 m_detachOffset;
         private string m_attachAnimation;
         private Collider[] m_attachColliders;
-		
-		private StateDef State { get; set; }
+        private Rigidbody m_attachRigidbody;
+
+        private StateDef State { get; set; }
 
 		private sealed class StateDef
 		{
@@ -103,17 +104,22 @@ namespace RagnarsRokare.Factions
 					}
 					m_sleepTimer = Time.time + (SleepUntilMorning ? float.MaxValue : SleepTime);
 					var bedGO = ZNetScene.instance.FindInstance(bedZDOId);
-
-					AttachStart(aiBase, bedGO.transform, bedGO, hideWeapons: true, isBed: true, onShip: false, "attach_bed", new Vector3(0f, 0.1f, 0f));
-
+					var attachPoint = bedGO.GetComponent<Bed>().transform;
+					AttachStart(aiBase, attachPoint, bedGO.transform.rotation, bedGO, hideWeapons: true, isBed: true, onShip: false, "attach_bed", new Vector3(0f, 0.1f, 0f));
+                    On.Humanoid.FixedUpdate += (On.Humanoid.orig_FixedUpdate orig, Humanoid self) =>
+                    {
+						orig(self);
+                        //UpdateAttach(aiBase);
+                    };
+					
 				})
                 .OnExit(t =>
                 {
                     Jotunn.Logger.LogDebug($"{aiBase.Character.GetHoverName()} getting out of bed");
 					// Trigger stand up animation
 					m_sleeping = false;
-					AttachStop(aiBase);
-				});
+                    AttachStop(aiBase);
+                });
         }
 
         public void Update(MobAIBase aiBase, float dt)
@@ -137,7 +143,7 @@ namespace RagnarsRokare.Factions
         }
 
 
-		public void AttachStart(MobAIBase npc, Transform attachPoint, GameObject colliderRoot, bool hideWeapons, bool isBed, bool onShip, string attachAnimation, Vector3 detachOffset)
+		public void AttachStart(MobAIBase npc, Transform attachPoint, Quaternion attachRotation, GameObject colliderRoot, bool hideWeapons, bool isBed, bool onShip, string attachAnimation, Vector3 detachOffset)
 		{
 			if (m_attached)
 			{
@@ -145,22 +151,23 @@ namespace RagnarsRokare.Factions
 			}
 			m_attached = true;
 			m_attachPoint = attachPoint;
+			m_attachRigidbody = colliderRoot.GetComponent<Rigidbody>();
 			m_detachOffset = detachOffset;
 			m_attachAnimation = attachAnimation;
 			m_zanim.SetBool(attachAnimation, value: true);
 			npc.NView.GetZDO().Set("inBed", isBed);
-			if (colliderRoot != null)
-			{
-				var attachColliders = colliderRoot.GetComponentsInChildren<Collider>();
-				m_attachColliders = attachColliders;
-				ZLog.Log("Ignoring " + attachColliders.Length + " colliders");
-				var npcCollider = npc.NView.gameObject.GetComponent<CapsuleCollider>();
-				foreach (Collider collider in attachColliders)
-				{
-					Physics.IgnoreCollision(npcCollider, collider, ignore: true);
-				}
-			}
-			if (hideWeapons)
+            //if (colliderRoot != null)
+            //{
+            //    var attachColliders = colliderRoot.GetComponentsInChildren<Collider>();
+            //    m_attachColliders = attachColliders;
+            //    ZLog.Log("Ignoring " + attachColliders.Length + " colliders");
+            //    var npcCollider = npc.NView.gameObject.GetComponent<CapsuleCollider>();
+            //    foreach (Collider collider in attachColliders)
+            //    {
+            //        Physics.IgnoreCollision(npcCollider, collider, ignore: true);
+            //    }
+            //}
+            if (hideWeapons)
 			{
 				(npc.Character as Humanoid).HideHandItems();
 			}
@@ -168,7 +175,7 @@ namespace RagnarsRokare.Factions
 			(npc.Character as Humanoid).ResetCloth();
 		}
 
-		private void UpdateAttach(MobAIBase npc)
+        private void UpdateAttach(MobAIBase npc)
 		{
 			if (m_attached)
 			{
@@ -176,7 +183,7 @@ namespace RagnarsRokare.Factions
 				{
 					npc.Character.transform.position = m_attachPoint.position;
 					npc.Character.transform.rotation = m_attachPoint.rotation;
-					Rigidbody componentInParent = m_attachPoint.GetComponentInParent<Rigidbody>();
+					Rigidbody componentInParent = m_attachRigidbody;
 					npc.Character.m_body.useGravity = false;
 					npc.Character.m_body.velocity = (componentInParent ? componentInParent.GetPointVelocity(npc.Character.transform.position) : Vector3.zero);
 					npc.Character.m_body.angularVelocity = Vector3.zero;
@@ -211,7 +218,7 @@ namespace RagnarsRokare.Factions
 			}
 			if (m_attachPoint != null)
 			{
-				npc.Character.transform.position = m_attachPoint.TransformPoint(m_detachOffset);
+				npc.Character.transform.position = m_attachPoint.position;
 			}
 			if (m_attachColliders != null)
 			{
@@ -233,6 +240,5 @@ namespace RagnarsRokare.Factions
 			npc.NView.GetZDO().Set("inBed", value: false);
 			npc.Character.ResetCloth();
 		}
-
 	}
 }
