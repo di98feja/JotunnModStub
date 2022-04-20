@@ -98,7 +98,7 @@ namespace RagnarsRokare.Factions
 
         private static string RandomizeMaleName()
         {
-            string[] beginnings = new string[] { "Sig", "Ulf", "Tor", "Alf", "Sten" };
+            string[] beginnings = new string[] { "Sig", "Ulf", "Tor", "Alf", "Sten", "Rot"};
             string[] endings = new string[] { "var", "gor", "dur", "bar", "e", "beorn" };
             return $"{beginnings[m_random.Next(beginnings.Length)]}{endings[m_random.Next(endings.Length)]}";
         }
