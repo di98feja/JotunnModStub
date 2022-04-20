@@ -45,6 +45,7 @@ namespace RagnarsRokare.Factions
             if (FactionManager.IsSameFaction(npcZdo, Player.m_localPlayer))
             {
                 AddAccessInventoryDialog(npc, Player.m_localPlayer, responses);
+                AddFollowMeCommandDialog(MobAI.Common.GetNView(npc), Player.m_localPlayer, responses);
             }
             else if (playerStanding >= Misc.Constants.Standing_Neutral)
             {
@@ -54,6 +55,37 @@ namespace RagnarsRokare.Factions
             CreateInteractionDialog(npcText, responses.ToArray());
             InteractionPanel.SetActive(true);
             GUIManager.BlockInput(true);
+        }
+
+        private static void AddFollowMeCommandDialog(ZNetView npc, Player player, List<Response> responses)
+        {
+            var npcAi = MobAI.MobManager.AliveMobs[npc.GetZDO().GetString(Constants.Z_UniqueId)] as NpcAI;
+            if (npcAi.IsInFollowing(player))
+            {
+                responses.Add(new Response
+                {
+                    Text = "Stay here",
+                    Callback = () =>
+                    {
+                        InteractionPanel.SetActive(false);
+                        GUIManager.BlockInput(false);
+                        npc.InvokeRPC(ZNetView.Everybody, Constants.Z_MobCommand, player.GetZDOID(), "UnFollow");
+                    }
+                });
+            }
+            else
+            {
+                responses.Add(new Response
+                {
+                    Text = "Follow me",
+                    Callback = () =>
+                    {
+                        InteractionPanel.SetActive(false);
+                        GUIManager.BlockInput(false);
+                        npc.InvokeRPC(ZNetView.Everybody, Constants.Z_MobCommand, player.GetZDOID(), "Follow");
+                    }
+                });
+            }
         }
 
         private static void AddJoinFactionOfferDialog(ZDO npcZdo, Player player, List<Response> responses)

@@ -22,11 +22,12 @@ namespace RagnarsRokare.Factions
         private IDynamicBehaviour m_dynamicBehaviour;
         private ApathyBehaviour m_apathyBehaviour;
         private HopelessBehaviour m_hopelessBehaviour;
+        private HirdBehaviour m_hirdBehaviour;
 
         // Triggers
         readonly StateMachine<string, string>.TriggerWithParameters<float> UpdateTrigger;
 
-        private Vector3 m_startPosition;
+        public Vector3 m_startPosition;
         public MaxStack<Container> m_containers;
         readonly NpcAIConfig m_config;
         private Animator m_animator;
@@ -105,6 +106,11 @@ namespace RagnarsRokare.Factions
             m_apathyBehaviour.FailState = State.Root;
             m_apathyBehaviour.Configure(this, Brain, State.DynamicBehaviour);
 
+            m_hirdBehaviour = new HirdBehaviour();
+            m_hirdBehaviour.SuccessState = State.Root;
+            m_hirdBehaviour.FailState = State.Root;
+            m_hirdBehaviour.Configure(this, Brain, State.DynamicBehaviour);
+
             ConfigureRoot();
             ConfigureDynamicBehaviour();
         }
@@ -134,7 +140,11 @@ namespace RagnarsRokare.Factions
         private void SelectDynamicBehaviour(float motivation)
         {
             var selectedBehaviour = m_dynamicBehaviour;
-            if (motivation < Misc.Constants.Motivation_Hopeless)
+            if (FactionManager.GetNpcFaction(NView.GetZDO()).FactionId != FactionManager.DefaultNPCFactionId)
+            {
+                selectedBehaviour = m_hirdBehaviour;
+            }
+            else if (motivation < Misc.Constants.Motivation_Hopeless)
             {
                 selectedBehaviour = m_apathyBehaviour;               
             }
@@ -228,11 +238,6 @@ namespace RagnarsRokare.Factions
             return comfort;
         }
 
-        public override void Follow(Player player)
-        {
-            throw new NotImplementedException();
-        }
-
         public void StartEmote(EmoteManager.Emotes emoteName, bool oneshot = true)
         {
             EmoteManager.StartEmote(NView, emoteName, oneshot);
@@ -248,14 +253,34 @@ namespace RagnarsRokare.Factions
             };
         }
 
+        public override void Follow(Player player)
+        {
+            NView.InvokeRPC(ZNetView.Everybody, Constants.Z_MobCommand, player.GetZDOID(), "Follow");
+        }
+
+        public bool IsInFollowing(Player player)
+        {
+            return player.gameObject == (Instance as MonsterAI).GetFollowTarget();
+        }
+
+        protected override void RPC_MobCommand(long sender, ZDOID playerId, string command)
+        {
+            Player player = GetPlayer(playerId);
+            if (!(player == null) && command == "Follow")
+            {
+                (Instance as MonsterAI).ResetPatrolPoint();
+                (Instance as MonsterAI).SetFollowTarget(player.gameObject);
+            }
+            else if (command == "UnFollow")
+            {
+                (Instance as MonsterAI).SetFollowTarget(null);
+            }
+        }
+
         public override void GotShoutedAtBy(MobAIBase mob)
         {
             throw new NotImplementedException();
         }
 
-        protected override void RPC_MobCommand(long sender, ZDOID playerId, string command)
-        {
-
-        }
     }
 }

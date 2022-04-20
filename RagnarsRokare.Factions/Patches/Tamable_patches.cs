@@ -90,10 +90,10 @@ namespace RagnarsRokare.Factions.Patches
                         return false;
                     }
 
-                    if (Time.time - ___m_lastPetTime > 1f && standing >= Misc.Constants.Standing_Friendly)
+                    if (Time.time - ___m_lastPetTime > 1f)
                     {
                         ___m_lastPetTime = Time.time;
-                        if (__instance.m_commandable && standing >= Misc.Constants.Standing_Friendly)
+                        if (__instance.m_commandable && FactionManager.IsSameFaction(npcZdo, Player.m_localPlayer))
                         {
                             __instance.Command(user);
                         }

@@ -100,6 +100,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Behaviours\HirdBehaviour.cs" />
     <Compile Include="Behaviours\HopelessBehaviour.cs" />
     <Compile Include="Behaviours\ApathyBehaviour.cs" />
     <Compile Include="Behaviours\SleepBehaviour.cs" />
