@@ -98,15 +98,15 @@ namespace RagnarsRokare.Factions
 
         private static string RandomizeMaleName()
         {
-            string[] beginnings = new string[] { "Sig", "Ulf", "Tor", "Alf", "Sten", "Rot"};
+            string[] beginnings = new string[] { "Sig", "Ulf", "Tor", "Alf", "Sten", "Rot", "Snorr", "Run", "Frej"};
             string[] endings = new string[] { "var", "gor", "dur", "bar", "e", "beorn" };
             return $"{beginnings[m_random.Next(beginnings.Length)]}{endings[m_random.Next(endings.Length)]}";
         }
 
         private static string RandomizeFemaleName()
         {
-            string[] beginnings = new string[] { "Sig", "Hild", "Gun", "Britt", "Maj"};
-            string[] endings = new string[] { "vor", "rid", "lin", "a" };
+            string[] beginnings = new string[] { "Sig", "Hild", "Gun", "Britt", "Maj", "Run", "Sag"};
+            string[] endings = new string[] { "vor", "rid", "lin", "a", "frid", "gerd" };
             return $"{beginnings[m_random.Next(beginnings.Length)]}{endings[m_random.Next(endings.Length)]}";
         }
 
