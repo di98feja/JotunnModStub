@@ -184,11 +184,8 @@ namespace RagnarsRokare.Factions
                 m_calculateComfortTimer = Time.time + CalculateComfortLevelInterval;
                 var motivation = MotivationManager.CalculateMotivation(NView.GetZDO(), ComfortLevel);
                 Debug.Log($"Motivation = {motivation} ");
-                if (MotivationLevel != motivation || m_dynamicBehaviour == null)
-                {
-                    MotivationLevel = motivation;
-                    SelectDynamicBehaviour(motivation);
-                }
+                MotivationLevel = motivation;
+                SelectDynamicBehaviour(motivation);
             }
             m_dynamicBehaviour.Update(this, dt);
         }

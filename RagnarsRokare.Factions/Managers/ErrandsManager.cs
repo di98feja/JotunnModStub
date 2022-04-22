@@ -65,6 +65,15 @@ namespace RagnarsRokare.Factions
                     RequestItemAmount = 5,
                     CompletedString = "Ahh!  Yes, these will do nicely. \nThank you!",
                     CanceledString = "No? You could not find any?"
+                },
+                new Errand
+                {
+                    Id = 5,
+                    RequestString = $"This cabin is dreadfully dark at night. \nIf I had some more resin I could make some torches",
+                    RequestItem = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Material, "Resin").FirstOrDefault()?.m_itemData,
+                    RequestItemAmount = 4,
+                    CompletedString = "Ahh!  Yes, this should be enough for a couple of torches. \nThank you!",
+                    CanceledString = "No? You could not find any?"
                 }
             };
         }

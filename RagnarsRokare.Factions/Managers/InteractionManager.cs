@@ -153,7 +153,7 @@ namespace RagnarsRokare.Factions
             List<Response> responses = new List<Response>();
             responses.Add(new Response
             {
-                Text = "We could build a good life here if we stand together. Would you like to join my ranks?",
+                Text = "We could build a good life here if we stand together. Would you like to join my hird?",
                 Callback = () =>
                 {
                     InteractionPanel.SetActive(false);

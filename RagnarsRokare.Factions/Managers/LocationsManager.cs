@@ -14,11 +14,18 @@ namespace RagnarsRokare.Factions
         {
             var embeddedResourceBundle = AssetUtils.LoadAssetBundleFromResources("npcbed", typeof(Factions).Assembly);
             var npcBedPrefab = embeddedResourceBundle.LoadAsset<GameObject>("Assets/NpcBed/npc_bed.prefab");
-            PrefabManager.Instance.AddPrefab(new Jotunn.Entities.CustomPrefab(npcBedPrefab, true));
-            m_npcBedPrefab = PrefabManager.Instance.GetPrefab("npc_bed");
+            //PrefabManager.Instance.AddPrefab(new Jotunn.Entities.CustomPrefab(npcBedPrefab, true));
             Jotunn.Logger.LogInfo($"Embedded resources: {string.Join(",", typeof(Factions).Assembly.GetManifestResourceNames())}");
 
-            PieceManager.Instance.AddPiece(new Jotunn.Entities.CustomPiece(m_npcBedPrefab, true, new Jotunn.Configs.PieceConfig { Name = "Npc bed" }));
+            PieceManager.Instance.AddPiece(new Jotunn.Entities.CustomPiece(npcBedPrefab, true, 
+                new Jotunn.Configs.PieceConfig 
+                { 
+                    Name = "Npc bed", 
+                    PieceTable = "Hammer",
+                    Category = "Hird",
+                    Description = "A simple bed for your hird"
+                }));
+            //m_npcBedPrefab = PrefabManager.Instance.GetPrefab("npc_bed");
 
             var goblinBedPrefab = PrefabManager.Instance.GetPrefab("goblin_bed");
             goblinBedPrefab.gameObject.AddComponent<Bed>();

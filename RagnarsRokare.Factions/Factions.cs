@@ -35,6 +35,7 @@ namespace RagnarsRokare.Factions
 
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), PluginGUID);
 
+            PrefabManager.OnVanillaPrefabsAvailable += PrefabManager_OnVanillaPrefabsAvailable;
             MobAI.MobManager.RegisterMobAI(typeof(NpcAI));
             On.ZoneSystem.PrepareNetViews += LocationsManager.PrepareNetViews;
             On.ZoneSystem.PrepareRandomSpawns += LocationsManager.SetupNpcLocations;
@@ -44,6 +45,8 @@ namespace RagnarsRokare.Factions
             On.FejdStartup.Awake += FejdStartup_Awake;
             On.ZRoutedRpc.ctor += InitRPCs;
             On.Bed.Awake += Bed_patch.Bed_Awake;
+            On.Bed.GetHoverText += Bed_patch.Bed_GetHoverText;
+            On.Bed.Interact += Bed_patch.Bed_Interact;
             On.ObjectDB.Awake += ObjectDB_Awake;
 
             On.Player.OnSpawned += Player_OnSpawned;
@@ -52,6 +55,11 @@ namespace RagnarsRokare.Factions
 
             // To learn more about Jotunn's features, go to
             // https://valheim-modding.github.io/Jotunn/tutorials/overview.html
+        }
+
+        private void PrefabManager_OnVanillaPrefabsAvailable()
+        {
+            LoadAssets();
         }
 
         private void ObjectDB_Awake(On.ObjectDB.orig_Awake orig, ObjectDB self)
@@ -69,6 +77,10 @@ namespace RagnarsRokare.Factions
                 {
                     Minimap.instance.AddPin(loc.Value.m_position, Minimap.PinType.Bed, loc.Value.m_location.m_prefabName, !(loc.Value.m_location.m_netViews.FirstOrDefault(n => n.gameObject.GetComponent<Bed>()) ?? false), false);
                 }
+                //if (loc.Value.m_location.m_netViews.Any(z => z.gameObject.name.Contains("Beehive")))
+                //{
+                //    Minimap.instance.AddPin(loc.Value.m_position, Minimap.PinType.Icon0, loc.Value.m_location.m_prefabName, !(loc.Value.m_location.m_netViews.FirstOrDefault(n => n.gameObject.GetComponent<Bed>()) ?? false), false);
+                //}
             }
         }
 
@@ -80,7 +92,6 @@ namespace RagnarsRokare.Factions
             // Call this method so the original game method is invoked
             orig(self);
 
-            LoadAssets();
 
             // This code runs after Valheim's FejdStartup.Awake
             Jotunn.Logger.LogInfo("FejdStartup has awoken");

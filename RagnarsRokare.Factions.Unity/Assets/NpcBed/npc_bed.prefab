@@ -434,7 +434,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1223492141743099}
-  m_Mesh: {fileID: 4300000, guid: 65c29cf3d7d54e747bc25daf0223ad39, type: 2}
+  m_Mesh: {fileID: 4300000, guid: c8153de0f5e10fe40b3927225f64dc01, type: 2}
 --- !u!23 &23714477421390062
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -987,7 +987,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1696726577184857}
-  m_Mesh: {fileID: 4300000, guid: ccb4f2daad3ceea43ade8d48441ef6dc, type: 2}
+  m_Mesh: {fileID: 4300000, guid: 3761403c3d0c5314b805b6e5ccd97fcf, type: 2}
 --- !u!23 &23624289745464866
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1130,7 +1130,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1697072517983607}
-  m_Mesh: {fileID: 4300000, guid: bc9a6e9090625324781fc16b9ec0e6d4, type: 2}
+  m_Mesh: {fileID: 4300000, guid: 284f7e3ad6a283c48b42fcd5f473c287, type: 2}
 --- !u!1 &1735718619198931
 GameObject:
   m_ObjectHideFlags: 0
@@ -1392,7 +1392,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1853573287055024}
-  m_Mesh: {fileID: 4300000, guid: 65c29cf3d7d54e747bc25daf0223ad39, type: 2}
+  m_Mesh: {fileID: 4300000, guid: 27cef47a51b46ed4a91daa016f1914cc, type: 2}
 --- !u!1 &1906953865110453
 GameObject:
   m_ObjectHideFlags: 0
@@ -1907,7 +1907,7 @@ MonoBehaviour:
   m_primaryTarget: 1
   m_randomTarget: 1
   m_targetNonPlayerBuilt: 1
-  m_icon: {fileID: 0}
+  m_icon: {fileID: 21300000, guid: 4ec9ba444ef546d49a9d6feb06f95abc, type: 3}
   m_name: Worn bed
   m_description: 
   m_enabled: 1
