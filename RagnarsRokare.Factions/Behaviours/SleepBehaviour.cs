@@ -106,12 +106,6 @@ namespace RagnarsRokare.Factions
 					var bedGO = ZNetScene.instance.FindInstance(bedZDOId);
 					var attachPoint = bedGO.GetComponent<Bed>().transform;
 					AttachStart(aiBase, attachPoint, bedGO.transform.rotation, bedGO, hideWeapons: true, isBed: true, onShip: false, "attach_bed", new Vector3(0f, 0.1f, 0f));
-                    On.Humanoid.FixedUpdate += (On.Humanoid.orig_FixedUpdate orig, Humanoid self) =>
-                    {
-						orig(self);
-                        //UpdateAttach(aiBase);
-                    };
-					
 				})
                 .OnExit(t =>
                 {

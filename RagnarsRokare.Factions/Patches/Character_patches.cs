@@ -69,4 +69,15 @@ namespace RagnarsRokare.Factions
         }
 
     }
+    //[HarmonyPatch(typeof(Character), "IsPlayer")]
+    //static class Character_IsPlayer_Patch
+    //{
+    //    static void Postfix(Character __instance, bool __result)
+    //    {
+    //        if (__instance.name.Contains("NPC"))
+    //        {
+    //            __result = true;
+    //        }
+    //    }
+    //}
 }

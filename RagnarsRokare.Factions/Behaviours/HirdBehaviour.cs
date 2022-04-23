@@ -13,6 +13,7 @@ namespace RagnarsRokare.Factions
         private Vector3 m_startPosition;
         private IDynamicBehaviour m_dynamicBehaviour;
         private SleepBehaviour m_sleepBehaviour;
+        private SitBehaviour m_sitBehaviour;
         private DynamicEatingBehaviour m_eatingBehaviour;
 
 
@@ -68,6 +69,11 @@ namespace RagnarsRokare.Factions
             m_eatingBehaviour.HealPercentageOnConsume = 0.25f + (StandingsManager.GetStandingTowards(npcAi.NView.GetZDO(), FactionManager.GetNpcFaction(npcAi.NView.GetZDO())))/100;
             m_eatingBehaviour.Configure(npcAi, brain, State.DynamicBehaviour);
 
+            m_sitBehaviour = new SitBehaviour();
+            m_sitBehaviour.SuccessState = State.Main;
+            m_sitBehaviour.FailState= State.Main;
+            m_sitBehaviour.SitTime = 20;
+            m_sitBehaviour.Configure(npcAi, brain, State.DynamicBehaviour);
 
             brain.Configure(State.Main)
                .InitialTransition(State.Wander)
@@ -95,7 +101,7 @@ namespace RagnarsRokare.Factions
             brain.Configure(State.Sit)
                 .SubstateOf(State.Main)
                 .Permit(Trigger.RandomWalk, State.Wander)
-                .Permit(Trigger.ChangeDynamicBehaviour, State.DynamicBehaviour)
+                .Permit(Trigger.StartDynamicBehaviour, m_sitBehaviour.StartState)
                 .OnEntry(t =>
                 {
                     npcAi.UpdateAiStatus(State.Sit);
@@ -103,13 +109,12 @@ namespace RagnarsRokare.Factions
                     {
                         SayRandomThing(npcAi.Character);
                     }
-                    _currentStateTimeout = Time.time + StateTimeout;
-                    EmoteManager.StartEmote(npcAi.NView, EmoteManager.Emotes.Sit, false);
                     Debug.Log($"{npcAi.Character.m_name}: Switching to Sit.");
+                    m_dynamicBehaviour = m_sitBehaviour;
+                    brain.Fire(Trigger.StartDynamicBehaviour);
                 })
                 .OnExit(t =>
                 {
-                    EmoteManager.StopEmote(npcAi.NView);
                 });
 
             brain.Configure(State.Wander)
@@ -205,15 +210,6 @@ namespace RagnarsRokare.Factions
                     instance.Brain.Fire(Trigger.SitDown);
                 }
                 instance.MoveAndAvoidFire(m_targetPosition, dt, 0f, false, true);
-                return;
-            }
-
-            if (instance.Brain.IsInState(State.Sit))
-            {
-                if (Time.time > _currentStateTimeout)
-                {
-                    instance.Brain.Fire(Trigger.RandomWalk);
-                }
                 return;
             }
         }

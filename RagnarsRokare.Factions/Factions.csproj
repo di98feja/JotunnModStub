@@ -103,6 +103,7 @@
     <Compile Include="Behaviours\HirdBehaviour.cs" />
     <Compile Include="Behaviours\HopelessBehaviour.cs" />
     <Compile Include="Behaviours\ApathyBehaviour.cs" />
+    <Compile Include="Behaviours\SitBehaviour.cs" />
     <Compile Include="Behaviours\SleepBehaviour.cs" />
     <Compile Include="Config\NpcAIConfig.cs" />
     <Compile Include="Constants.cs" />
