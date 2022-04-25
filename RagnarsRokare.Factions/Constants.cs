@@ -27,5 +27,6 @@
         internal const string Z_NpcBedOwnerId = "RR_NpcBedOwnerId";
         internal const string Z_NpcActiveErrand = "RR_NpcActiveErrandId";
         internal const string Z_PlayerActiveErrands = "RR_PLayerActiveErrands";
+        internal const string Z_IsEncumbered = "RR_IsEncumbered";
     }
 }

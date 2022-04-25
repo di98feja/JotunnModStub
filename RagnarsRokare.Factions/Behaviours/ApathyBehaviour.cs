@@ -31,6 +31,7 @@ namespace RagnarsRokare.Factions
             "*stares blankly into the void*",
             "*looks utterly defeated*"
         };
+        private MobAIBase m_mobAiBase;
 
         // Settings
         public string StartState => State.Main;
@@ -41,11 +42,12 @@ namespace RagnarsRokare.Factions
 
         public void Abort()
         {
-            On.Character.IsEncumbered -= Character_IsEncumbered;
+            m_mobAiBase.NView.GetZDO().Set(Misc.Constants.Z_IsEncumbered, false);
         }
 
         public void Configure(MobAIBase aiBase, StateMachine<string, string> brain, string parentState)
         {
+            m_mobAiBase = aiBase;
             brain.Configure(State.Main)
                .InitialTransition(State.Sit)
                .SubstateOf(parentState)
@@ -54,6 +56,7 @@ namespace RagnarsRokare.Factions
                {
                    aiBase.UpdateAiStatus("Apathy");
                    Common.Dbgl("Entered ApathyBehaviour", true, "NPC");
+                   aiBase.NView.GetZDO().Set(Misc.Constants.Z_IsEncumbered, true);
                });
 
             brain.Configure(State.Sit)
@@ -82,14 +85,11 @@ namespace RagnarsRokare.Factions
                     {
                         SayRandomThing(aiBase.Character);
                     }
-                    On.Character.IsEncumbered += Character_IsEncumbered;
-
                     _currentStateTimeout = Time.time + StateTimeout;
                     m_targetPosition = GetRandomPointInRadius(aiBase.HomePosition, 1.5f);
                 })
                 .OnExit(t =>
                 {
-                    On.Character.IsEncumbered -= Character_IsEncumbered;
                     aiBase.Character.m_zanim.SetBool(Character.encumbered, value: false);
                 });
         }
@@ -98,11 +98,6 @@ namespace RagnarsRokare.Factions
         {
             int index = UnityEngine.Random.Range(0, Comments.Length);
             npc.GetComponent<Talker>().Say(Talker.Type.Normal, Comments[index]);
-        }
-
-        private bool Character_IsEncumbered(On.Character.orig_IsEncumbered orig, Character self)
-        {
-            return true;
         }
 
         public void Update(MobAIBase instance, float dt)

@@ -14,6 +14,7 @@ namespace RagnarsRokare.Factions
         private SleepBehaviour m_sleepBehaviour;
         private DynamicEatingBehaviour m_eatingBehaviour;
         private float m_fleeTimer;
+        private MobAIBase m_mobAiBase;
 
         private class State
         {
@@ -57,11 +58,17 @@ namespace RagnarsRokare.Factions
 
         public void Abort()
         {
-            m_dynamicBehaviour.Abort();
+            if (m_mobAiBase.Brain.IsInState(State.DynamicBehaviour))
+            {
+                m_dynamicBehaviour.Abort();
+            }
+            m_mobAiBase.NView.GetZDO().Set(Misc.Constants.Z_IsEncumbered, false);
         }
 
         public void Configure(MobAIBase aiBase, StateMachine<string, string> brain, string parentState)
         {
+            m_mobAiBase = aiBase;
+
             m_sleepBehaviour = new SleepBehaviour();
             m_sleepBehaviour.SuccessState = State.Main;
             m_sleepBehaviour.FailState = State.Main;
@@ -83,13 +90,11 @@ namespace RagnarsRokare.Factions
                {
                    aiBase.UpdateAiStatus("Hopeless");
                    Common.Dbgl("Entered HopelessBehaviour", true, "NPC");
+                   aiBase.NView.GetZDO().Set(Misc.Constants.Z_IsEncumbered, true);
                })
                .OnExit(t =>
                {
-                   if (aiBase.Brain.IsInState(State.DynamicBehaviour))
-                   {
-                       m_dynamicBehaviour.Abort();
-                   }
+                   Abort();
                 });
 
             brain.Configure(State.Sit)
@@ -121,15 +126,9 @@ namespace RagnarsRokare.Factions
                     {
                         SayRandomThing(aiBase.Character);
                     }
-                    //aiBase.Character.m_zanim.SetBool(Character.encumbered, value: true);
-
                     _currentStateTimeout = Time.time + StateTimeout;
                     m_targetPosition = GetRandomPointInRadius(aiBase.HomePosition, 2f);
                     Debug.Log($"{aiBase.Character.m_name}: Switching to Wander.");
-                })
-                .OnExit(t =>
-                {
-                    aiBase.Character.m_zanim.SetBool(Character.encumbered, value: false);
                 });
 
             brain.Configure(State.DynamicBehaviour)

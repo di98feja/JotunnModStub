@@ -69,6 +69,19 @@ namespace RagnarsRokare.Factions
         }
 
     }
+
+    [HarmonyPatch(typeof(Character), "IsEncumbered")]
+    static class Character_IsEncumbered_Patch
+    {
+        static void Postfix(Character __instance, bool __result)
+        {
+            if (__instance.m_nview.IsValid() && __instance.m_nview.GetZDO().GetBool(Misc.Constants.Z_IsEncumbered))
+            {
+                __result = true;
+            }
+        }
+    }
+
     //[HarmonyPatch(typeof(Character), "IsPlayer")]
     //static class Character_IsPlayer_Patch
     //{
