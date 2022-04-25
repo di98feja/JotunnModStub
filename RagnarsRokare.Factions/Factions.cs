@@ -129,7 +129,9 @@ namespace RagnarsRokare.Factions
             if (ZInput.m_instance == null) return;
             if (ZInput.GetButtonUp(SpawnNpcKey.Name))
             {
-                NpcManager.CreateRandomizedNpc(Player.m_localPlayer.transform.position + Player.m_localPlayer.transform.forward);
+                var npc = NpcManager.CreateRandomizedNpc(Player.m_localPlayer.transform.position + Player.m_localPlayer.transform.forward);
+                FactionManager.SetFaction(npc.GetComponent<ZNetView>().GetZDO(), FactionManager.GetLocalPlayerFaction().FactionId);
+                StandingsManager.SetStandingTowards(npc.GetComponent<ZNetView>().GetZDO(), FactionManager.GetLocalPlayerFaction(), Misc.Constants.Standing_MinimumInteraction);
             }
         }
     }
