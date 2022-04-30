@@ -17,6 +17,7 @@ namespace RagnarsRokare.Factions
         private DynamicEatingBehaviour m_eatingBehaviour;
         private DynamicSortingBehaviour m_dynamicSortingBehaviour;
         private float m_currentBehaviourTimeout;
+        float m_fleeTimer;
 
         private StateDef State { get; set; }
 
@@ -28,6 +29,7 @@ namespace RagnarsRokare.Factions
             public string Sit { get { return $"{prefix}Sit"; } }
             public string Wander { get { return $"{prefix}Wander"; } }
             public string Follow { get { return $"{prefix}Follow"; } }
+            public string Flee { get { return $"{prefix}F´lee"; } }
             public string DynamicBehaviour { get { return $"{prefix}DynamicBehaviour"; } }
             public string StateSelection { get { return $"{prefix}StateSelection"; } }
 
@@ -45,6 +47,8 @@ namespace RagnarsRokare.Factions
             public string Abort { get { return $"{prefix}Abort"; } }
             public string SitDown { get { return $"{prefix}SitDown"; } }
             public string RandomWalk { get { return $"{prefix}RandomWalk"; } }
+            public string Update { get { return $"{prefix}Update"; } }
+            public string Allerted { get { return $"{prefix}Allerted"; } }
             public string StartDynamicBehaviour { get { return $"{prefix}StartDynamicBehaviour"; } }
             public string ChangeDynamicBehaviour { get { return $"{prefix}ChangeDynamicBehaviour"; } }
             public string Follow { get { return $"{prefix}Follow"; } }
@@ -107,6 +111,7 @@ namespace RagnarsRokare.Factions
                .InitialTransition(State.StateSelection)
                .SubstateOf(parentState)
                .PermitDynamic(Trigger.Abort, () => FailState)
+               .PermitIf(Trigger.Allerted, State.Flee, () => !brain.IsInState(State.Flee) && (mobAi.TimeSinceHurt < 20.0f || Common.Alarmed(mobAi.Instance, mobAi.Awareness) || mobAi.Instance.m_alerted))
                .Permit(Trigger.Follow, State.Follow)
                .OnEntry(t =>
                {
@@ -218,6 +223,23 @@ namespace RagnarsRokare.Factions
                     Debug.Log($"{npcAi.Character.m_name}: Switching to {m_dynamicBehaviour}");
                     brain.Fire(Trigger.StartDynamicBehaviour);
                 });
+
+            brain.Configure(State.Flee)
+                .SubstateOf(State.Main)
+                .PermitIf(Trigger.Update, State.StateSelection, () => !Common.Alarmed(npcAi.Instance, Mathf.Max(1, npcAi.Awareness + 2)) && m_fleeTimer > 10f)
+                .OnEntry(t =>
+                {
+                    m_fleeTimer = 0f;
+                    npcAi.UpdateAiStatus("Flee");
+                    npcAi.Instance.Alert();
+                })
+                .OnExit(t =>
+                {
+                    MobAIBase.Invoke<MonsterAI>(npcAi.Instance, "SetAlerted", false);
+                    npcAi.Attacker = null;
+                    npcAi.StopMoving();
+                });
+
         }
 
         private void SayRandomThing(Character npc)
@@ -250,6 +272,17 @@ namespace RagnarsRokare.Factions
 
             // Update eating
             m_eatingBehaviour.Update(instance, dt);
+            instance.Brain.Fire(Trigger.Allerted);
+            instance.Brain.Fire(Trigger.Update);
+
+            if (instance.Brain.IsInState(State.Flee))
+            {
+                var fleeFrom = instance.Attacker == null ? instance.Character.transform.position : instance.Attacker.transform.position;
+                MobAIBase.Invoke<MonsterAI>(instance.Instance, "Flee", dt, fleeFrom);
+                m_fleeTimer += dt;
+                return;
+            }
+
             if (instance.Brain.IsInState(m_eatingBehaviour.StartState))    
             {
                 return;
