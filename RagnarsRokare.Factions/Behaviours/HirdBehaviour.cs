@@ -112,6 +112,10 @@ namespace RagnarsRokare.Factions
                {
                    npcAi.UpdateAiStatus("Hird");
                    Common.Dbgl("Entered HirdBehaviour", true, "NPC");
+                   mobAi.Character.m_speed = 2f;
+                   mobAi.Character.m_walkSpeed = 1.5f;
+                   mobAi.Character.m_runSpeed = 5f;
+                   mobAi.Character.m_swimSpeed = 2f;
                });
 
             brain.Configure(State.StateSelection)

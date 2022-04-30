@@ -91,6 +91,10 @@ namespace RagnarsRokare.Factions
                    aiBase.UpdateAiStatus("Hopeless");
                    Common.Dbgl("Entered HopelessBehaviour", true, "NPC");
                    aiBase.NView.GetZDO().Set(Misc.Constants.Z_IsEncumbered, true);
+                   m_mobAiBase.Character.m_speed = 1f;
+                   m_mobAiBase.Character.m_walkSpeed = 0.5f;
+                   m_mobAiBase.Character.m_runSpeed = 2f;
+                   m_mobAiBase.Character.m_swimSpeed = 0.5f;
                })
                .OnExit(t =>
                {

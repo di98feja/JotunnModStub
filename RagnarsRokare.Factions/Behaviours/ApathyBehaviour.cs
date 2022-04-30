@@ -57,6 +57,10 @@ namespace RagnarsRokare.Factions
                    aiBase.UpdateAiStatus("Apathy");
                    Common.Dbgl("Entered ApathyBehaviour", true, "NPC");
                    aiBase.NView.GetZDO().Set(Misc.Constants.Z_IsEncumbered, true);
+                   m_mobAiBase.Character.m_speed = 0.5f;
+                   m_mobAiBase.Character.m_walkSpeed = 0.2f;
+                   m_mobAiBase.Character.m_runSpeed = 0.5f;
+                   m_mobAiBase.Character.m_swimSpeed = 0.2f;
                });
 
             brain.Configure(State.Sit)
