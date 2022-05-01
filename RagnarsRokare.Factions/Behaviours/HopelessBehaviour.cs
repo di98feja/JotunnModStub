@@ -178,8 +178,16 @@ namespace RagnarsRokare.Factions
 
             if (instance.Brain.IsInState(State.Flee))
             {
-                var fleeFrom = instance.Attacker == null ? instance.Character.transform.position : instance.Attacker.transform.position;
-                MobAIBase.Invoke<MonsterAI>(instance, "Flee", dt, fleeFrom);
+                if (instance.Attacker != null)
+                {
+                    var fleeFrom = instance.Attacker.transform.position;
+                    instance.Instance.Flee(dt, fleeFrom);
+                }
+                else
+                {
+                    instance.MoveAndAvoidFire(instance.HomePosition, dt, 0f, true, false);
+                }
+                m_fleeTimer += dt;
                 return;
             }
 

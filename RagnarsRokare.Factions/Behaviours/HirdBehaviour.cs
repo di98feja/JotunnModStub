@@ -111,7 +111,7 @@ namespace RagnarsRokare.Factions
                .InitialTransition(State.StateSelection)
                .SubstateOf(parentState)
                .PermitDynamic(Trigger.Abort, () => FailState)
-               .PermitIf(Trigger.Allerted, State.Flee, () => !brain.IsInState(State.Flee) && (mobAi.TimeSinceHurt < 20.0f || Common.Alarmed(mobAi.Instance, mobAi.Awareness) || mobAi.Instance.m_alerted))
+               .PermitIf(Trigger.Allerted, State.Flee, () => !brain.IsInState(State.Flee) && (mobAi.TimeSinceHurt < 20.0f || Common.Alarmed(mobAi.Instance, mobAi.Awareness)))
                .Permit(Trigger.Follow, State.Follow)
                .OnEntry(t =>
                {
@@ -277,8 +277,15 @@ namespace RagnarsRokare.Factions
 
             if (instance.Brain.IsInState(State.Flee))
             {
-                var fleeFrom = instance.Attacker == null ? instance.Character.transform.position : instance.Attacker.transform.position;
-                MobAIBase.Invoke<MonsterAI>(instance.Instance, "Flee", dt, fleeFrom);
+                if (instance.Attacker != null)
+                {
+                    var fleeFrom = instance.Attacker.transform.position;
+                    instance.Instance.Flee(dt, fleeFrom);
+                }
+                else
+                {
+                    instance.MoveAndAvoidFire(instance.HomePosition, dt, 0f, true, false);
+                }
                 m_fleeTimer += dt;
                 return;
             }
