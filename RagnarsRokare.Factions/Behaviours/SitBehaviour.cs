@@ -177,7 +177,7 @@ namespace RagnarsRokare.Factions
             var firePos = Vector3.zero;
             var allPieces = new List<Piece>();
             Piece.GetAllPiecesInRadius(aiBase.Character.transform.position, 20f, allPieces);
-            var firepit = allPieces.Where(p => p.m_comfortGroup == Piece.ComfortGroup.Fire).RandomOrDefault();
+            var firepit = allPieces.Where(p => p.m_comfortGroup == Piece.ComfortGroup.Fire).Where(f => IsBurning(f)).RandomOrDefault();
             bool found = false;
             for (int i = 0; i < 100 && !found; i++)
             {
@@ -191,6 +191,12 @@ namespace RagnarsRokare.Factions
                 }
             }
             return (posNearFire, firePos);
+        }
+
+        private bool IsBurning(Piece f)
+        {
+            var fire = f.GetComponent<Fireplace>();
+            return fire?.IsBurning() ?? false;
         }
 
         private Vector3 GetRandomPointInRadius(Vector3 center, float minRadius, float maxRadius)
@@ -248,7 +254,7 @@ namespace RagnarsRokare.Factions
         {
             if (aiBase.Brain.IsInState(State.WalkingToChair))
             {
-                if (aiBase.MoveAndAvoidFire(m_targetSeat.position, dt, 1.5f))
+                if (aiBase.MoveAndAvoidFire(m_targetSeat.position, dt, 2.5f))
                 {
                     aiBase.Brain.Fire(Trigger.SitDown);
                 }

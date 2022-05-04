@@ -183,7 +183,6 @@ namespace RagnarsRokare.Factions
                 }
                 m_calculateComfortTimer = Time.time + CalculateComfortLevelInterval;
                 var motivation = MotivationManager.CalculateMotivation(NView.GetZDO(), ComfortLevel);
-                Debug.Log($"Motivation = {motivation} ");
                 MotivationLevel = motivation;
                 SelectDynamicBehaviour(motivation);
             }
@@ -192,7 +191,7 @@ namespace RagnarsRokare.Factions
 
         private int CalculateComfortLevel()
         {
-            Jotunn.Logger.LogDebug($"{Character.m_name}:CalculateComfortLevel");
+            //Jotunn.Logger.LogDebug($"{Character.m_name}:CalculateComfortLevel");
             var bedZDOId = NView.GetZDO().GetZDOID(Misc.Constants.Z_NpcBedOwnerId);
             if (bedZDOId == ZDOID.None) return 0; // No bed, no comfort
 

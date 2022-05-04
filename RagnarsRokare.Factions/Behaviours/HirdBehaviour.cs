@@ -16,6 +16,7 @@ namespace RagnarsRokare.Factions
         private SitBehaviour m_sitBehaviour;
         private DynamicEatingBehaviour m_eatingBehaviour;
         private DynamicSortingBehaviour m_dynamicSortingBehaviour;
+        private DynamicWorkerBehaviour m_dynamicWorkerBehaviour;
         private float m_currentBehaviourTimeout;
         float m_fleeTimer;
 
@@ -29,7 +30,7 @@ namespace RagnarsRokare.Factions
             public string Sit { get { return $"{prefix}Sit"; } }
             public string Wander { get { return $"{prefix}Wander"; } }
             public string Follow { get { return $"{prefix}Follow"; } }
-            public string Flee { get { return $"{prefix}F´lee"; } }
+            public string Flee { get { return $"{prefix}Flee"; } }
             public string DynamicBehaviour { get { return $"{prefix}DynamicBehaviour"; } }
             public string StateSelection { get { return $"{prefix}StateSelection"; } }
 
@@ -71,7 +72,7 @@ namespace RagnarsRokare.Factions
         public string StartState => State.Main;
         public string SuccessState { get; set; }
         public string FailState { get; set; }
-        public float StateTimeout { get; set; } = 30f + UnityEngine.Random.Range(0f, 10f);
+        public float StateTimeout { get; set; } = 200f + UnityEngine.Random.Range(0f, 50f);
         public float RandomCommentChance { get; set; } = 10f;
 
         public void Abort()
@@ -106,6 +107,12 @@ namespace RagnarsRokare.Factions
             m_dynamicSortingBehaviour.SuccessState = State.Main;
             m_dynamicSortingBehaviour.FailState = State.Main;
             m_dynamicSortingBehaviour.Configure(npcAi, brain, State.DynamicBehaviour);
+
+            m_dynamicWorkerBehaviour = new DynamicWorkerBehaviour();
+            m_dynamicWorkerBehaviour.SuccessState = State.Main;
+            m_dynamicWorkerBehaviour.FailState = State.Main;
+            m_dynamicWorkerBehaviour.AcceptedContainerNames = mobAi.AcceptedContainerNames;
+            m_dynamicWorkerBehaviour.Configure(npcAi, brain, State.DynamicBehaviour);
 
             brain.Configure(State.Main)
                .InitialTransition(State.StateSelection)
@@ -158,7 +165,7 @@ namespace RagnarsRokare.Factions
                             return;
                         }
                     }
-                    m_dynamicBehaviour = m_dynamicSortingBehaviour;
+                    m_dynamicBehaviour = UnityEngine.Random.value < 0.5f ? m_dynamicSortingBehaviour as IDynamicBehaviour : m_dynamicWorkerBehaviour as IDynamicBehaviour;
                     mobAi.Brain.Fire(Trigger.StartDynamicBehaviour);
                 });
 
