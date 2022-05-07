@@ -11,12 +11,11 @@ namespace RagnarsRokare.Factions
         private float _currentStateTimeout;
         private Vector3 m_targetPosition;
         private Vector3 m_startPosition;
-        private IDynamicBehaviour m_dynamicBehaviour;
+        private IDynamicBehaviour m_currentBehaviour;
         private SleepBehaviour m_sleepBehaviour;
         private SitBehaviour m_sitBehaviour;
+        private WorkdayBehaviour m_workdayBehaviour;
         private DynamicEatingBehaviour m_eatingBehaviour;
-        private DynamicSortingBehaviour m_dynamicSortingBehaviour;
-        private DynamicWorkerBehaviour m_dynamicWorkerBehaviour;
         private float m_currentBehaviourTimeout;
         float m_fleeTimer;
 
@@ -28,10 +27,13 @@ namespace RagnarsRokare.Factions
 
             public string Main { get { return $"{prefix}Main"; } }
             public string Sit { get { return $"{prefix}Sit"; } }
+            public string Sleep { get { return $"{prefix}Sleep"; } }
             public string Wander { get { return $"{prefix}Wander"; } }
             public string Follow { get { return $"{prefix}Follow"; } }
             public string Flee { get { return $"{prefix}Flee"; } }
-            public string DynamicBehaviour { get { return $"{prefix}DynamicBehaviour"; } }
+            public string Eating { get { return $"{prefix}Eating"; } }
+            public string WorkdayBehaviour { get { return $"{prefix}WorkdayBehaviour"; } }
+            public string RestingBehaviour { get { return $"{prefix}RestingBehaviour"; } }
             public string StateSelection { get { return $"{prefix}StateSelection"; } }
 
             public StateDef(string prefix)
@@ -47,6 +49,9 @@ namespace RagnarsRokare.Factions
 
             public string Abort { get { return $"{prefix}Abort"; } }
             public string SitDown { get { return $"{prefix}SitDown"; } }
+            public string GotoBed { get { return $"{prefix}GotoBed"; } }
+            public string FindFood { get { return $"{prefix}FindFood"; } }
+            public string GotoWork { get { return $"{prefix}GotoWork"; } }
             public string RandomWalk { get { return $"{prefix}RandomWalk"; } }
             public string Update { get { return $"{prefix}Update"; } }
             public string Allerted { get { return $"{prefix}Allerted"; } }
@@ -77,7 +82,7 @@ namespace RagnarsRokare.Factions
 
         public void Abort()
         {
-            m_dynamicBehaviour.Abort();
+            m_currentBehaviour.Abort();
         }
 
         public void Configure(MobAIBase mobAi, StateMachine<string, string> brain, string parentState)
@@ -88,31 +93,25 @@ namespace RagnarsRokare.Factions
             m_sleepBehaviour = new SleepBehaviour();
             m_sleepBehaviour.SuccessState = State.Main;
             m_sleepBehaviour.FailState = State.Main;
-            m_sleepBehaviour.Configure(npcAi, brain, State.DynamicBehaviour);
+            m_sleepBehaviour.Configure(npcAi, brain, State.Sleep);
             m_sleepBehaviour.SleepUntilMorning = true;
 
             m_eatingBehaviour = new DynamicEatingBehaviour();
             m_eatingBehaviour.SuccessState = State.Main;
             m_eatingBehaviour.FailState = State.Main;
             m_eatingBehaviour.HealPercentageOnConsume = 0.25f + (StandingsManager.GetStandingTowards(npcAi.NView.GetZDO(), FactionManager.GetNpcFaction(npcAi.NView.GetZDO())))/100;
-            m_eatingBehaviour.Configure(npcAi, brain, State.DynamicBehaviour);
+            m_eatingBehaviour.Configure(npcAi, brain, State.Eating);
 
             m_sitBehaviour = new SitBehaviour();
             m_sitBehaviour.SuccessState = State.Main;
             m_sitBehaviour.FailState= State.Main;
             m_sitBehaviour.SitTime = 20;
-            m_sitBehaviour.Configure(npcAi, brain, State.DynamicBehaviour);
+            m_sitBehaviour.Configure(npcAi, brain, State.Sit);
 
-            m_dynamicSortingBehaviour = new DynamicSortingBehaviour();
-            m_dynamicSortingBehaviour.SuccessState = State.Main;
-            m_dynamicSortingBehaviour.FailState = State.Main;
-            m_dynamicSortingBehaviour.Configure(npcAi, brain, State.DynamicBehaviour);
-
-            m_dynamicWorkerBehaviour = new DynamicWorkerBehaviour();
-            m_dynamicWorkerBehaviour.SuccessState = State.Main;
-            m_dynamicWorkerBehaviour.FailState = State.Main;
-            m_dynamicWorkerBehaviour.AcceptedContainerNames = mobAi.AcceptedContainerNames;
-            m_dynamicWorkerBehaviour.Configure(npcAi, brain, State.DynamicBehaviour);
+            m_workdayBehaviour = new WorkdayBehaviour();
+            m_workdayBehaviour.SuccessState = State.Main;
+            m_workdayBehaviour.FailState = State.Main;
+            m_workdayBehaviour.Configure(npcAi, brain, State.WorkdayBehaviour);
 
             brain.Configure(State.Main)
                .InitialTransition(State.StateSelection)
@@ -120,6 +119,7 @@ namespace RagnarsRokare.Factions
                .PermitDynamic(Trigger.Abort, () => FailState)
                .PermitIf(Trigger.Allerted, State.Flee, () => !brain.IsInState(State.Flee) && (mobAi.TimeSinceHurt < 20.0f || Common.Alarmed(mobAi.Instance, mobAi.Awareness)))
                .Permit(Trigger.Follow, State.Follow)
+               .Permit(Trigger.SelectState, State.StateSelection)
                .OnEntry(t =>
                {
                    npcAi.UpdateAiStatus("Hird");
@@ -134,20 +134,28 @@ namespace RagnarsRokare.Factions
                 .SubstateOf(State.Main)
                 .Permit(Trigger.SitDown, State.Sit)
                 .Permit(Trigger.RandomWalk, State.Wander)
-                .Permit(Trigger.StartDynamicBehaviour, State.DynamicBehaviour)
-                .Permit(Trigger.ChangeDynamicBehaviour, State.DynamicBehaviour)
+                .Permit(Trigger.GotoBed, State.Sleep)
+                .Permit(Trigger.GotoWork, State.WorkdayBehaviour)
+                .Permit(Trigger.FindFood, State.Eating)
                 .OnEntry(() =>
                 {
+                    m_currentBehaviour = null;
                     if (m_eatingBehaviour.IsHungry(mobAi.IsHurt))
                     {
-                        m_dynamicBehaviour = m_eatingBehaviour;
-                        mobAi.Brain.Fire(Trigger.ChangeDynamicBehaviour);
+                        m_currentBehaviour = m_eatingBehaviour;
+                        mobAi.Brain.Fire(Trigger.FindFood);
                         return;
                     }
+                    
                     if (EnvMan.instance.IsNight())
                     {
-                        m_dynamicBehaviour = m_sleepBehaviour;
-                        mobAi.Brain.Fire(Trigger.ChangeDynamicBehaviour);
+                        m_currentBehaviour = m_sleepBehaviour;
+                        mobAi.Brain.Fire(Trigger.GotoBed);
+                        return;
+                    }
+                    else if (EnvMan.instance.GetDayFraction() >= 0.70f)
+                    {
+                        mobAi.Brain.Fire(Trigger.SitDown);
                         return;
                     }
                     m_currentBehaviourTimeout = Time.time + StateTimeout;
@@ -165,12 +173,23 @@ namespace RagnarsRokare.Factions
                             return;
                         }
                     }
-                    m_dynamicBehaviour = UnityEngine.Random.value < 0.5f ? m_dynamicSortingBehaviour as IDynamicBehaviour : m_dynamicWorkerBehaviour as IDynamicBehaviour;
-                    mobAi.Brain.Fire(Trigger.StartDynamicBehaviour);
+                    m_currentBehaviour = m_workdayBehaviour;
+                    mobAi.Brain.Fire(Trigger.GotoWork);
                 });
 
+            brain.Configure(State.WorkdayBehaviour)
+                .SubstateOf(State.Main)
+                .InitialTransition(m_workdayBehaviour.StartState);
+
+            brain.Configure(State.Sleep)
+                .SubstateOf(State.Main)
+                .InitialTransition(m_sleepBehaviour.StartState);
+
+            brain.Configure(State.Eating)
+                .SubstateOf(State.Main);
+
             brain.Configure(State.Follow)
-                .Permit(Trigger.SelectState, State.StateSelection)
+                .SubstateOf(State.Main)
                 .OnEntry(t =>
                 {
                     npcAi.UpdateAiStatus(State.Follow);
@@ -183,8 +202,6 @@ namespace RagnarsRokare.Factions
 
             brain.Configure(State.Sit)
                 .SubstateOf(State.Main)
-                .Permit(Trigger.SelectState, State.StateSelection)
-                .Permit(Trigger.StartDynamicBehaviour, m_sitBehaviour.StartState)
                 .OnEntry(t =>
                 {
                     npcAi.UpdateAiStatus(State.Sit);
@@ -193,7 +210,7 @@ namespace RagnarsRokare.Factions
                         SayRandomThing(npcAi.Character);
                     }
                     Debug.Log($"{npcAi.Character.m_name}: Switching to Sit.");
-                    m_dynamicBehaviour = m_sitBehaviour;
+                    m_currentBehaviour = m_sitBehaviour;
                     brain.Fire(Trigger.StartDynamicBehaviour);
                 })
                 .OnExit(t =>
@@ -202,7 +219,6 @@ namespace RagnarsRokare.Factions
 
             brain.Configure(State.Wander)
                 .SubstateOf(State.Main)
-                .Permit(Trigger.SelectState, State.StateSelection)
                 .OnEntry(t =>
                 {
                     if (UnityEngine.Random.Range(0f, 100f) <= RandomCommentChance)
@@ -211,7 +227,7 @@ namespace RagnarsRokare.Factions
                     }
                     npcAi.UpdateAiStatus(State.Wander);
                     _currentStateTimeout = Time.time + StateTimeout;
-                    m_targetPosition = GetRandomPointInRadius(npcAi.HomePosition, 2f);
+                    m_targetPosition = GetRandomPointInRadius(npcAi.HomePosition, 20f);
                     Debug.Log($"{npcAi.Character.m_name}: Switching to Wander.");
                 })
                 .OnExit(t =>
@@ -219,17 +235,16 @@ namespace RagnarsRokare.Factions
                     npcAi.Character.m_zanim.SetBool(Character.encumbered, value: false);
                 });
 
-            brain.Configure(State.DynamicBehaviour)
-                .SubstateOf(State.Wander)
-                .PermitDynamic(Trigger.StartDynamicBehaviour, () => m_dynamicBehaviour.StartState)
-                .PermitReentry(Trigger.ChangeDynamicBehaviour)
-                .Permit(Trigger.SelectState, State.StateSelection)
-                .OnEntry(t =>
-                {
-                    Jotunn.Logger.LogDebug("DynamicBehaviour.OnEntry()");
-                    Debug.Log($"{npcAi.Character.m_name}: Switching to {m_dynamicBehaviour}");
-                    brain.Fire(Trigger.StartDynamicBehaviour);
-                });
+            //brain.Configure(State.WorkdayBehaviour)
+            //    .SubstateOf(State.Wander)
+            //    .PermitDynamic(Trigger.StartDynamicBehaviour, () => m_currentBehaviour.StartState)
+            //    .PermitReentry(Trigger.ChangeDynamicBehaviour)
+            //    .OnEntry(t =>
+            //    {
+            //        Jotunn.Logger.LogDebug("DynamicBehaviour.OnEntry()");
+            //        Debug.Log($"{npcAi.Character.m_name}: Switching to {m_currentBehaviour}");
+            //        brain.Fire(Trigger.StartDynamicBehaviour);
+            //    });
 
             brain.Configure(State.Flee)
                 .SubstateOf(State.Main)
@@ -242,7 +257,7 @@ namespace RagnarsRokare.Factions
                 })
                 .OnExit(t =>
                 {
-                    MobAIBase.Invoke<MonsterAI>(npcAi.Instance, "SetAlerted", false);
+                    (npcAi.Instance as MonsterAI).SetAlerted(false);
                     npcAi.Attacker = null;
                     npcAi.StopMoving();
                 });
@@ -302,9 +317,15 @@ namespace RagnarsRokare.Factions
                 return;
             }
 
-            if (m_dynamicBehaviour == m_sleepBehaviour && m_sleepBehaviour.SleepUntilMorning)
+            if (instance.Brain.IsInState(State.WorkdayBehaviour) && EnvMan.instance.GetDayFraction() >= 0.70f)
             {
-                m_dynamicBehaviour.Update(instance, dt);
+                m_workdayBehaviour.Abort();
+                instance.Brain.Fire(Trigger.SelectState);
+            }
+
+            if (instance.Brain.IsInState(State.Sleep) && m_sleepBehaviour.SleepUntilMorning)
+            {
+                m_currentBehaviour.Update(instance, dt);
                 return;
             }
 
@@ -314,9 +335,9 @@ namespace RagnarsRokare.Factions
                 return;
             }
 
-            if (instance.Brain.IsInState(State.DynamicBehaviour))
+            if (instance.Brain.IsInState(State.WorkdayBehaviour))
             {
-                m_dynamicBehaviour.Update(instance, dt);
+                m_currentBehaviour.Update(instance, dt);
                 return;
             }
 
