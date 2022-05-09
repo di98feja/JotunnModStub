@@ -125,7 +125,6 @@
     <Compile Include="Patches\Character_patches.cs" />
     <Compile Include="Patches\Minimap_patches.cs" />
     <Compile Include="Patches\Tamable_patches.cs" />
-    <Compile Include="Patches\VisEquipment_patch.cs" />
     <Compile Include="Properties\IgnoreAccessModifiers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

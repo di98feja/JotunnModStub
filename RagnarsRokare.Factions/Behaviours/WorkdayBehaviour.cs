@@ -10,6 +10,7 @@ namespace RagnarsRokare.Factions
 
         private DynamicSortingBehaviour m_dynamicSortingBehaviour;
         private DynamicWorkerBehaviour m_dynamicWorkerBehaviour;
+        private DynamicRepairingBehaviour m_dynamicRepairingBehaviour;
         private IDynamicBehaviour m_currentBehaviour;
         private float m_currentTaskTimer;
 
@@ -51,7 +52,7 @@ namespace RagnarsRokare.Factions
         public string StartState => State.Main;
         public string SuccessState { get; set; }
         public string FailState { get; set; }
-        public float TaskTimeout { get; set; } = 120f;
+        public float TaskTimeout { get; set; } = 20f;
 
         public void Abort()
         {
@@ -73,6 +74,10 @@ namespace RagnarsRokare.Factions
             m_dynamicWorkerBehaviour.AcceptedContainerNames = npcAi.AcceptedContainerNames;
             m_dynamicWorkerBehaviour.Configure(npcAi, brain, State.Main);
 
+            m_dynamicRepairingBehaviour = new DynamicRepairingBehaviour();
+            m_dynamicRepairingBehaviour.SuccessState = State.Main;
+            m_dynamicRepairingBehaviour.FailState= State.Main;
+            m_dynamicRepairingBehaviour.Configure(npcAi, brain, State.Main);
 
             brain.Configure(State.Main)
                .SubstateOf(parentState)
@@ -81,17 +86,21 @@ namespace RagnarsRokare.Factions
                .PermitDynamic(Trigger.StartWork, () => m_currentBehaviour.StartState)
                .OnEntry(t =>
                {
+                   aiBase.StopMoving();
                    aiBase.UpdateAiStatus("Starting workday");
                    Common.Dbgl("Entered WorkdayBehaviour", true, "NPC");
 
-                   var r = UnityEngine.Random.value;
-                   if (r < 0.5f)
+                   switch (UnityEngine.Random.Range(0, 3))
                    {
-                       m_currentBehaviour = m_dynamicSortingBehaviour;
-                   }
-                   else
-                   {
-                       m_currentBehaviour = m_dynamicWorkerBehaviour;
+                       case 0:
+                           m_currentBehaviour = m_dynamicSortingBehaviour;
+                           break;
+                       case 1:
+                            m_currentBehaviour = m_dynamicWorkerBehaviour;
+                           break;
+                       case 2:
+                           m_currentBehaviour = m_dynamicRepairingBehaviour;
+                           break;
                    }
 
                    m_currentTaskTimer = Time.time + TaskTimeout;

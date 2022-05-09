@@ -186,7 +186,8 @@ namespace RagnarsRokare.Factions
                 .InitialTransition(m_sleepBehaviour.StartState);
 
             brain.Configure(State.Eating)
-                .SubstateOf(State.Main);
+                .SubstateOf(State.Main)
+                .InitialTransition(m_eatingBehaviour.StartState);
 
             brain.Configure(State.Follow)
                 .SubstateOf(State.Main)
@@ -202,6 +203,7 @@ namespace RagnarsRokare.Factions
 
             brain.Configure(State.Sit)
                 .SubstateOf(State.Main)
+                .Permit(Trigger.StartDynamicBehaviour, m_sitBehaviour.StartState)
                 .OnEntry(t =>
                 {
                     npcAi.UpdateAiStatus(State.Sit);
@@ -234,17 +236,6 @@ namespace RagnarsRokare.Factions
                 {
                     npcAi.Character.m_zanim.SetBool(Character.encumbered, value: false);
                 });
-
-            //brain.Configure(State.WorkdayBehaviour)
-            //    .SubstateOf(State.Wander)
-            //    .PermitDynamic(Trigger.StartDynamicBehaviour, () => m_currentBehaviour.StartState)
-            //    .PermitReentry(Trigger.ChangeDynamicBehaviour)
-            //    .OnEntry(t =>
-            //    {
-            //        Jotunn.Logger.LogDebug("DynamicBehaviour.OnEntry()");
-            //        Debug.Log($"{npcAi.Character.m_name}: Switching to {m_currentBehaviour}");
-            //        brain.Fire(Trigger.StartDynamicBehaviour);
-            //    });
 
             brain.Configure(State.Flee)
                 .SubstateOf(State.Main)
@@ -336,6 +327,12 @@ namespace RagnarsRokare.Factions
             }
 
             if (instance.Brain.IsInState(State.WorkdayBehaviour))
+            {
+                m_currentBehaviour.Update(instance, dt);
+                return;
+            }
+
+            if (instance.Brain.IsInState(State.Sit))
             {
                 m_currentBehaviour.Update(instance, dt);
                 return;
