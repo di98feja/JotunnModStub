@@ -49,7 +49,7 @@ namespace RagnarsRokare.Factions
                 string givenName = ___m_nview?.GetZDO()?.GetString(Constants.Z_GivenName);
 
                 var npcContainer = __instance.GetComponent<NpcContainer>();
-                npcContainer.Init((__instance as Humanoid).GetInventory());
+                npcContainer.Load(__instance as Humanoid);
 
                 Jotunn.Logger.LogInfo($"{__instance.m_name} woke up");
             }

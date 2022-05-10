@@ -48,6 +48,8 @@ namespace RagnarsRokare.Factions
             On.Bed.GetHoverText += Bed_patch.Bed_GetHoverText;
             On.Bed.Interact += Bed_patch.Bed_Interact;
             On.ObjectDB.Awake += ObjectDB_Awake;
+            On.Game.Shutdown += Game_Shutdown;
+            On.Humanoid.GiveDefaultItems += Humanoid_GiveDefaultItems;
 
             On.Player.OnSpawned += Player_OnSpawned;
             // Jotunn comes with its own Logger class to provide a consistent Log style for all mods using it
@@ -55,6 +57,21 @@ namespace RagnarsRokare.Factions
 
             // To learn more about Jotunn's features, go to
             // https://valheim-modding.github.io/Jotunn/tutorials/overview.html
+        }
+
+        private void Humanoid_GiveDefaultItems(On.Humanoid.orig_GiveDefaultItems orig, Humanoid self)
+        {
+            if (self.gameObject.name.Contains("NPC")) return;
+            orig(self);
+        }
+
+        private void Game_Shutdown(On.Game.orig_Shutdown orig, Game self)
+        {
+            if (ZNet.m_isServer)
+            {
+                NpcManager.SaveAllNPCs();
+            }
+            orig(self);
         }
 
         private void PrefabManager_OnVanillaPrefabsAvailable()

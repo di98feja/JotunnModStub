@@ -56,6 +56,8 @@ namespace RagnarsRokare.Factions
 
         public void Abort()
         {
+            m_currentBehaviour.Abort();
+            m_currentBehaviour = null;
         }
 
         public void Configure(MobAIBase aiBase, StateMachine<string, string> brain, string parentState)

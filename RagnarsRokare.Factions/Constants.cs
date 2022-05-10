@@ -28,5 +28,6 @@
         internal const string Z_NpcActiveErrand = "RR_NpcActiveErrandId";
         internal const string Z_PlayerActiveErrands = "RR_PLayerActiveErrands";
         internal const string Z_IsEncumbered = "RR_IsEncumbered";
+        internal const string Z_SavedInventory= "RR_SavedInventory";
     }
 }

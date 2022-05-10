@@ -75,6 +75,18 @@ namespace RagnarsRokare.Factions
             return zdoList.ToArray();
         }
 
+        internal static void SaveAllNPCs()
+        {
+            foreach (var npc in MobAI.MobManager.AliveMobs.Values)
+            {
+                var npcContainer = npc.Character.GetComponent<NpcContainer>();
+                if (npcContainer)
+                {
+                    npcContainer.Save(npc.Character as Humanoid);
+                }
+            }
+        }
+
         public static string CreateAndSetRandomNameForNpc(Character npc)
         {
             string newName = IsMale(npc.gameObject) ? RandomizeMaleName() : RandomizeFemaleName();
@@ -154,7 +166,8 @@ namespace RagnarsRokare.Factions
             }
             visEquip.SetHairItem($"Hair{(hairNr == 0 ? "None" : hairNr.ToString())}");
             var humanoid = npc.GetComponent<Humanoid>();
-            npc.GetComponent<Humanoid>().HideHandItems();
+            humanoid.GiveDefaultItems();
+            humanoid.HideHandItems();
             nview.GetZDO().Set(Constants.Z_trainedAssignments, "Npc");
         }
 

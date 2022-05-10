@@ -59,9 +59,31 @@ namespace RagnarsRokare.Factions
             }
         }
 
-        public void Init(Inventory npcInventory)
+        public void Load(Humanoid npc)
         {
-            this.m_humanoidInventory = npcInventory;
+            this.m_humanoidInventory = npc.GetInventory();
+            var nview = npc.GetComponent<ZNetView>();
+            if (nview != null && nview.IsValid())
+            {
+                var savedInventory = nview.GetZDO().GetByteArray(Misc.Constants.Z_SavedInventory);
+                if (savedInventory != null)
+                {
+                    Jotunn.Logger.LogDebug($"{npc.GetHoverName()}:Loading inventory");
+                    m_humanoidInventory.Load(new ZPackage(savedInventory));
+                }
+            }
+        }
+
+        public void Save(Humanoid npc)
+        {
+            var nview = npc.GetComponent<ZNetView>();
+            if (nview != null && nview.IsValid())
+            {
+                Jotunn.Logger.LogDebug($"{npc.GetHoverName()}:Saving inventory");
+                var savedInventory = new ZPackage();
+                m_humanoidInventory.Save(savedInventory);
+                nview.GetZDO().Set(Misc.Constants.Z_SavedInventory, savedInventory.GetArray());
+            }
         }
 
         public bool NpcInteract(Humanoid character)
