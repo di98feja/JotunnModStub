@@ -110,6 +110,7 @@
     <Compile Include="Config\NpcAIConfig.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Factions.cs" />
+    <Compile Include="Managers\AttachManager.cs" />
     <Compile Include="Managers\EmoteManager.cs" />
     <Compile Include="Managers\ErrandsManager.cs" />
     <Compile Include="Managers\InteractionManager.cs" />

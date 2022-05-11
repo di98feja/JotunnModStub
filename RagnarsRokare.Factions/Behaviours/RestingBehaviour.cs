@@ -116,36 +116,36 @@ namespace RagnarsRokare.Factions
                    aiBase.UpdateAiStatus("Starting Resting");
                    Common.Dbgl("Entered RestingBehaviour", true, "NPC");
 
-                   if (m_eatingBehaviour.IsHungry(npcAi.IsHurt))
-                   {
-                       if (m_currentBehaviour != m_eatingBehaviour)
-                       {
-                           m_currentBehaviour = m_eatingBehaviour;
-                           npcAi.Brain.Fire(Trigger.FindFood);
-                       }
-                   }
-                   else if (EnvMan.instance.IsNight())
-                   {
-                       if (m_currentBehaviour != m_sleepBehaviour)
-                       {
-                           m_currentBehaviour = m_sleepBehaviour;
-                           npcAi.Brain.Fire(Trigger.GotoBed);
-                       }
-                   }
-                   else if (EnvMan.instance.GetDayFraction() >= 0.70f)
-                   {
+                   //if (m_eatingBehaviour.IsHungry(npcAi.IsHurt))
+                   //{
+                   //    if (m_currentBehaviour != m_eatingBehaviour)
+                   //    {
+                   //        m_currentBehaviour = m_eatingBehaviour;
+                   //        npcAi.Brain.Fire(Trigger.FindFood);
+                   //    }
+                   //}
+                   //else if (EnvMan.instance.IsNight())
+                   //{
+                   //    if (m_currentBehaviour != m_sleepBehaviour)
+                   //    {
+                   //        m_currentBehaviour = m_sleepBehaviour;
+                   //        npcAi.Brain.Fire(Trigger.GotoBed);
+                   //    }
+                   //}
+                   //else if (EnvMan.instance.GetDayFraction() >= 0.70f)
+                   //{
+                   //    if (m_currentBehaviour != m_sitBehaviour)
+                   //    {
+                   //        npcAi.Brain.Fire(Trigger.SitDown);
+                   //    }
+                   //}
+                   //else
+                   //{
                        if (m_currentBehaviour != m_sitBehaviour)
                        {
                            npcAi.Brain.Fire(Trigger.SitDown);
                        }
-                   }
-                   else
-                   {
-                       if (m_currentBehaviour != m_sitBehaviour)
-                       {
-                           npcAi.Brain.Fire(Trigger.SitDown);
-                       }
-                   }
+                   //}
 
                    m_currentStateTimer = Time.time + RestUpdateTimeout;
                })

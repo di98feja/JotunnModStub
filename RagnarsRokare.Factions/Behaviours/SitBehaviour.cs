@@ -1,6 +1,7 @@
 ﻿using RagnarsRokare.MobAI;
 using Stateless;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -74,8 +75,6 @@ namespace RagnarsRokare.Factions
 
         public void Configure(MobAIBase aiBase, StateMachine<string, string> brain, string parentState)
         {
-            Debug.Log($"Fixed Timestep {Time.fixedDeltaTime}");
-
             State = new StateDef(parentState + Prefix);
             Trigger = new TriggerDef(parentState + Prefix);
             m_zanim = aiBase.Instance.GetComponent<ZSyncAnimation>();
@@ -114,23 +113,15 @@ namespace RagnarsRokare.Factions
 
             brain.Configure(State.WalkingToFire)
                 .SubstateOf(State.Main)
-                .Permit(Trigger.TurnToFaceFire, State.TurningToFaceFire)
-                .OnEntry(() =>
-                { });
+                .Permit(Trigger.TurnToFaceFire, State.TurningToFaceFire);
 
             brain.Configure(State.TurningToFaceFire)
                 .SubstateOf(State.Main)
-                .Permit(Trigger.SitDown, State.SitOnGround)
-                .OnEntry(() =>
-                { });
+                .Permit(Trigger.SitDown, State.SitOnGround);
 
             brain.Configure(State.WalkingToChair)
                 .SubstateOf(State.Main)
-                .Permit(Trigger.SitDown, State.SitOnSeat)
-                .OnEntry(t =>
-                { })
-                .OnExit(t =>
-                { });
+                .Permit(Trigger.SitDown, State.SitOnSeat);
 
             brain.Configure(State.SitOnSeat)
                 .SubstateOf(State.Main)
@@ -169,7 +160,6 @@ namespace RagnarsRokare.Factions
                     EmoteManager.StopEmote(aiBase.NView);
                 });
         }
-
 
         private (Vector3, Vector3) FindPositionNearFire(MobAIBase aiBase)
         {
@@ -214,10 +204,9 @@ namespace RagnarsRokare.Factions
             foreach (var piece in allPieces.Where(p => p.m_comfortGroup == Piece.ComfortGroup.Chair).OrderByDescending(p => Vector3.Distance(p.transform.position, aiBase.Character.transform.position)))
             {
                 var chairAttachPoints = GetPieceAttachPoints(piece);
-                var allMobPositions = GetAllMobPoisitions();
                 foreach (var attachPoint in chairAttachPoints)
                 {
-                    if (!allMobPositions.Any(m => m == attachPoint.position))
+                    if (!AttachManager.IsAttachPointInUse(attachPoint))
                     {
                         freeAttachPoints.Add(attachPoint);
                     }
@@ -225,18 +214,6 @@ namespace RagnarsRokare.Factions
             }
             var mostComfortable = freeAttachPoints.OrderByDescending(a => Helpers.GetComfortFromNearbyPieces(a.position)).FirstOrDefault();
             return mostComfortable;
-        }
-
-        private IEnumerable<Vector3> GetAllMobPoisitions()
-        {
-            foreach (var mob in MobAI.MobManager.AliveMobs.Values)
-            {
-                yield return mob.Character.transform.position;
-            }
-            foreach (var player in ZNet.instance.GetPlayerList())
-            {
-                yield return player.m_position;
-            }
         }
 
         private IEnumerable<Transform> GetPieceAttachPoints(Piece piece)
@@ -254,7 +231,11 @@ namespace RagnarsRokare.Factions
         {
             if (aiBase.Brain.IsInState(State.WalkingToChair))
             {
-                if (aiBase.MoveAndAvoidFire(m_targetSeat.position, dt, 2.5f))
+                if (!(bool)m_targetSeat || AttachManager.IsAttachPointInUse(m_targetSeat))
+                {
+                    aiBase.Brain.Fire(Trigger.Abort);
+                }
+                else if (aiBase.MoveAndAvoidFire(m_targetSeat.position, dt, 2.5f))
                 {
                     aiBase.Brain.Fire(Trigger.SitDown);
                 }
@@ -263,7 +244,6 @@ namespace RagnarsRokare.Factions
 
             if (aiBase.Brain.IsInState(State.WalkingToFire))
             {
-                //if (aiBase.MoveAndAvoidFire(m_sitOnGroundPosition, dt, 2.0f))
                 if ((aiBase.Instance as MonsterAI).MoveTo(dt, m_sitOnGroundPosition, 1.0f, false))
                 {
                     aiBase.Brain.Fire(Trigger.TurnToFaceFire);
@@ -290,15 +270,19 @@ namespace RagnarsRokare.Factions
 
             if (aiBase.Brain.IsInState(State.SitOnSeat))
             {
+                if (!m_targetSeat)
+                {
+                    aiBase.Brain.Fire(Trigger.Abort);
+                    return;
+                }
+
                 if (Time.time > m_sitTimer)
                 {
                     aiBase.Brain.Fire(Trigger.StandUp);
                 }
-                UpdateAttach(aiBase);
                 return;
             }
         }
-
 
         public void AttachStart(MobAIBase npc, Transform attachPoint, GameObject colliderRoot, bool hideWeapons, bool isBed, bool onShip, string attachAnimation, Vector3 detachOffset)
         {
@@ -306,6 +290,7 @@ namespace RagnarsRokare.Factions
             {
                 return;
             }
+            AttachManager.RegisterAttachpoint(npc.NView.GetZDO().m_uid, attachPoint);
             m_attached = true;
             m_attachPoint = attachPoint;
             m_detachOffset = detachOffset;
@@ -326,19 +311,17 @@ namespace RagnarsRokare.Factions
             {
                 (npc.Character as Humanoid).HideHandItems();
             }
-            UpdateAttach(npc);
+            npc.Instance.StartCoroutine(UpdateAttach(npc));
             (npc.Character as Humanoid).ResetCloth();
         }
 
-        private float m_lastUpdate = 0f;
-
-        private void UpdateAttach(MobAIBase npc)
+        private IEnumerator UpdateAttach(MobAIBase npc)
         {
-            if (m_attached)
+            while (m_attached)
             {
+                yield return new WaitForFixedUpdate();
                 if (m_attachPoint != null)
                 {
-                    m_lastUpdate = Time.time;
                     npc.Character.transform.position = m_attachPoint.position;
                     npc.Character.transform.rotation = m_attachPoint.rotation;
                     Rigidbody componentInParent = m_attachPoint.GetComponentInParent<Rigidbody>();
@@ -365,9 +348,9 @@ namespace RagnarsRokare.Factions
             {
                 return;
             }
-            if (m_attachPoint != null)
+            if (m_detachOffset != null)
             {
-                npc.Character.transform.position = m_attachPoint.position;
+                npc.Character.transform.position += m_detachOffset;
             }
             if (m_attachColliders != null)
             {
@@ -386,7 +369,9 @@ namespace RagnarsRokare.Factions
             m_attached = false;
             m_attachPoint = null;
             m_zanim.SetBool(m_attachAnimation, value: false);
+            AttachManager.UnregisterAttachPoint(npc.NView.GetZDO().m_uid);
             npc.Character.ResetCloth();
+            npc.Instance.StopCoroutine(UpdateAttach(npc));
         }
     }
 }

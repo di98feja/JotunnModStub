@@ -109,6 +109,7 @@ namespace RagnarsRokare.Factions
             // Call this method so the original game method is invoked
             orig(self);
 
+            AttachManager.Init();
 
             // This code runs after Valheim's FejdStartup.Awake
             Jotunn.Logger.LogInfo("FejdStartup has awoken");

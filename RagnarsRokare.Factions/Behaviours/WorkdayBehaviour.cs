@@ -52,7 +52,7 @@ namespace RagnarsRokare.Factions
         public string StartState => State.Main;
         public string SuccessState { get; set; }
         public string FailState { get; set; }
-        public float TaskTimeout { get; set; } = 20f;
+        public float TaskTimeout { get; set; } = 120f;
 
         public void Abort()
         {

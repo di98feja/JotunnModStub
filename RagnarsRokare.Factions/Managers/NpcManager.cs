@@ -167,6 +167,13 @@ namespace RagnarsRokare.Factions
             visEquip.SetHairItem($"Hair{(hairNr == 0 ? "None" : hairNr.ToString())}");
             var humanoid = npc.GetComponent<Humanoid>();
             humanoid.GiveDefaultItems();
+            foreach (var item in humanoid.GetInventory().GetAllItems())
+            {
+                if (item.IsEquipable())
+                {
+                    humanoid.EquipItem(item);
+                }
+            }
             humanoid.HideHandItems();
             nview.GetZDO().Set(Constants.Z_trainedAssignments, "Npc");
         }

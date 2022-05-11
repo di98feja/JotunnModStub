@@ -37,7 +37,7 @@ namespace RagnarsRokare.Factions
         public string StartState => State.Main;
         public string SuccessState { get; set; }
         public string FailState { get; set; }
-        public float StateTimeout { get; set; } = 10f;
+        public float StateTimeout { get; set; } = 10f + UnityEngine.Random.Range(0, 8);
         public float RandomCommentChance { get; set; } = 25f;
 
         public void Abort()

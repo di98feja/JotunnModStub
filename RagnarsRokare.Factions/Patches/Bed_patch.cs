@@ -13,12 +13,16 @@ namespace RagnarsRokare.Factions
                 self.m_nview.GetZDO().m_persistent = true;
                 if (self.GetOwner() == 0L)
                 {
-                    var npc = NpcManager.CreateRandomizedNpc(self.transform.position);
-                    var npcZdo = npc.GetComponent<ZNetView>().GetZDO();
-                    self.SetOwner(npcZdo.m_uid.id, npc.GetComponent<Tameable>().GetHoverName());
-                    npcZdo.Set(Misc.Constants.Z_NpcBedOwnerId, self.m_nview.GetZDO().m_uid);
-                    npcZdo.Set(Constants.Z_SavedHomePosition, self.transform.position);
-                    npc.SetActive(false);
+                    self.m_nview.ClaimOwnership();
+                    if (self.m_nview.IsOwner())
+                    {
+                        var npc = NpcManager.CreateRandomizedNpc(self.transform.position);
+                        var npcZdo = npc.GetComponent<ZNetView>().GetZDO();
+                        self.SetOwner(npcZdo.m_uid.id, npc.GetComponent<Tameable>().GetHoverName());
+                        npcZdo.Set(Misc.Constants.Z_NpcBedOwnerId, self.m_nview.GetZDO().m_uid);
+                        npcZdo.Set(Constants.Z_SavedHomePosition, self.transform.position);
+                        npc.SetActive(false);
+                    }
                 }
             }
         }
