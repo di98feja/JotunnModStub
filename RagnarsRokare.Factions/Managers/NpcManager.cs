@@ -75,7 +75,7 @@ namespace RagnarsRokare.Factions
             return zdoList.ToArray();
         }
 
-        internal static void SaveAllNPCs()
+        internal static void SaveAllNPCs(object sender, System.EventArgs e)
         {
             foreach (var npc in MobAI.MobManager.AliveMobs.Values)
             {

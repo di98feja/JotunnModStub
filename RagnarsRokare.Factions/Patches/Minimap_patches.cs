@@ -1,41 +1,21 @@
 ﻿using HarmonyLib;
 using Jotunn;
+using RagnarsRokare.MobAI;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace RagnarsRokare.Factions.Patches
+namespace RagnarsRokare.Factions
 {
     internal class Minimap_patches
     {
         private static List<ZDOID> m_allMobZDOIDs = new List<ZDOID>();
 
-        internal static void RegisteredMobsChangedEvent_RPC(long sender, ZPackage pkg)
+        internal static void RegisteredMobsChanged(object sender, RegisteredMobsChangedEventArgs e)
         {
-            Logger.LogDebug("Got RegisteredMobsChangedEvent to Minimap_patch");
+            Jotunn.Logger.LogDebug("Got RegisteredMobsChangedEvent to Minimap_patch");
             m_allMobZDOIDs.Clear();
-            bool endOfStream = false;
-
-            while (!endOfStream)
-            {
-                try
-                {
-                    m_allMobZDOIDs.Add(pkg.ReadZDOID());
-                }
-                catch (System.IO.EndOfStreamException)
-                {
-                    endOfStream = true;
-                }
-            }
-            Logger.LogDebug($"Minimap now track {m_allMobZDOIDs.Count} mobs");
-        }
-
-        [HarmonyPatch(typeof(ZoneSystem), "Start")]
-        static class ZoneSystem_Start_Patch
-        {
-            static void Postfix()
-            {
-                ZRoutedRpc.instance.Register<ZPackage>(Constants.Z_RegisteredMobsChangedEvent, RegisteredMobsChangedEvent_RPC);
-            }
+            m_allMobZDOIDs.AddRange(e.AllMobZDOIDs);
+            Jotunn.Logger.LogDebug($"Minimap now track {m_allMobZDOIDs.Count} mobs");
         }
 
         [HarmonyPatch(typeof(Minimap), "UpdateDynamicPins")]

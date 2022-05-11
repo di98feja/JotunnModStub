@@ -48,10 +48,10 @@ namespace RagnarsRokare.Factions
             On.Bed.GetHoverText += Bed_patch.Bed_GetHoverText;
             On.Bed.Interact += Bed_patch.Bed_Interact;
             On.ObjectDB.Awake += ObjectDB_Awake;
-            On.Game.Shutdown += Game_Shutdown;
             On.Humanoid.GiveDefaultItems += Humanoid_GiveDefaultItems;
-
             On.Player.OnSpawned += Player_OnSpawned;
+
+            
             // Jotunn comes with its own Logger class to provide a consistent Log style for all mods using it
             Jotunn.Logger.LogInfo($"{PluginName} v{PluginVersion} has landed");
 
@@ -62,15 +62,6 @@ namespace RagnarsRokare.Factions
         private void Humanoid_GiveDefaultItems(On.Humanoid.orig_GiveDefaultItems orig, Humanoid self)
         {
             if (self.gameObject.name.Contains("NPC")) return;
-            orig(self);
-        }
-
-        private void Game_Shutdown(On.Game.orig_Shutdown orig, Game self)
-        {
-            if (ZNet.m_isServer)
-            {
-                NpcManager.SaveAllNPCs();
-            }
             orig(self);
         }
 
@@ -110,9 +101,16 @@ namespace RagnarsRokare.Factions
             orig(self);
 
             AttachManager.Init();
+            MobAI.EventManager.RegisteredMobsChanged += Minimap_patches.RegisteredMobsChanged;
+            MobAI.EventManager.ServerShutdown += NpcManager.SaveAllNPCs;
 
             // This code runs after Valheim's FejdStartup.Awake
             Jotunn.Logger.LogInfo("FejdStartup has awoken");
+        }
+
+        private void RegisteredMobsChanged(object sender, MobAI.RegisteredMobsChangedEventArgs e)
+        {
+            throw new System.NotImplementedException();
         }
 
         private void InitRPCs(On.ZRoutedRpc.orig_ctor orig, global::ZRoutedRpc self, bool server)
