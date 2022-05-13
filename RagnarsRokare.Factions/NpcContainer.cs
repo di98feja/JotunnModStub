@@ -15,7 +15,7 @@ namespace RagnarsRokare.Factions
 
             m_npc = gameObject.GetComponent<Humanoid>();
             On.InventoryGui.OnRightClickItem += InventoryGui_OnRightClickItem;
-            On.InventoryGui.Hide += InventoryGui_Hide; ;
+            On.InventoryGui.Hide += InventoryGui_Hide;
         }
 
         private void InventoryGui_Hide(On.InventoryGui.orig_Hide orig, InventoryGui self)

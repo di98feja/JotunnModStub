@@ -15,6 +15,7 @@ namespace RagnarsRokare.Factions
         private Vector3 m_sitOnGroundPosition;
         private Vector3 m_fireplacePosition;
         private float m_sitTimer;
+        private float m_eatAnimTimer;
         private bool m_sitting;
         protected ZSyncAnimation m_zanim;
         private bool m_attached;
@@ -22,6 +23,7 @@ namespace RagnarsRokare.Factions
         private Vector3 m_detachOffset;
         private string m_attachAnimation;
         private Collider[] m_attachColliders;
+        private MobAIBase m_aiBase;
 
         private StateDef State { get; set; }
 
@@ -67,14 +69,26 @@ namespace RagnarsRokare.Factions
         public string FailState { get; set; }
         public float SitTime { get; set; }
         public float SitByFireChance { get; set; } = 0.25f;
+        public float EatAnimationDelay { get; set; } = 5f;
+
+        private (string, Quaternion)[] m_foodList = new (string, Quaternion)[]
+            {
+                ("CookedMeat", new Quaternion(0.5f, 0f, 0f, 0f)),
+                ("Tankard", Quaternion.identity),
+                ("Carrot", new Quaternion(0.0f, 0.9239f, -0.3827f, 0f)),
+                ("Honey", Quaternion.identity),
+                ("MeadTasty", new Quaternion(0.75f, 0.5f, 0f, 0f))
+            };
 
         public void Abort()
         {
             m_sitting = false;
+            Common.HoldRightHandItem(m_aiBase.Character as Humanoid, null);
         }
 
         public void Configure(MobAIBase aiBase, StateMachine<string, string> brain, string parentState)
         {
+            m_aiBase = aiBase;
             State = new StateDef(parentState + Prefix);
             Trigger = new TriggerDef(parentState + Prefix);
             m_zanim = aiBase.Instance.GetComponent<ZSyncAnimation>();
@@ -108,6 +122,10 @@ namespace RagnarsRokare.Factions
                     }
                     m_targetSeat = FindClosestSeat(aiBase);
                     brain.Fire(Trigger.WalkToChair);
+                    var randomItem = m_foodList[UnityEngine.Random.Range(0, m_foodList.Length)];
+                    var itemToHold = ObjectDB.instance.GetItemByName(randomItem.Item1);
+                    itemToHold.m_itemData.m_dropPrefab = ObjectDB.m_instance.GetItemByName(randomItem.Item1).gameObject;
+                    Common.HoldRightHandItem(aiBase.Character as Humanoid, itemToHold.m_itemData, randomItem.Item2);
                     return;
                 });
 
@@ -137,7 +155,7 @@ namespace RagnarsRokare.Factions
                     }
                     m_sitTimer = Time.time + SitTime;
                     var attachPoint = m_targetSeat;
-                    AttachStart(aiBase, attachPoint, null, hideWeapons: true, isBed: false, onShip: false, "attach_chair", new Vector3(0f, 0.5f, 0f));
+                    AttachStart(aiBase, attachPoint, null, hideWeapons: false, isBed: false, onShip: false, "attach_chair", new Vector3(0f, 0.5f, 0f));
                 })
                 .OnExit(t =>
                 {
@@ -261,6 +279,12 @@ namespace RagnarsRokare.Factions
 
             if (aiBase.Brain.IsInState(State.SitOnGround))
             {
+                if (Time.time > m_eatAnimTimer)
+                {
+                    m_eatAnimTimer = Time.time + EatAnimationDelay + UnityEngine.Random.Range(-EatAnimationDelay / 2, EatAnimationDelay / 2);
+                    m_zanim.SetTrigger("eat");
+                }
+
                 if (Time.time > m_sitTimer)
                 {
                     aiBase.Brain.Fire(Trigger.StandUp);
@@ -274,6 +298,12 @@ namespace RagnarsRokare.Factions
                 {
                     aiBase.Brain.Fire(Trigger.Abort);
                     return;
+                }
+
+                if (Time.time > m_eatAnimTimer)
+                {
+                    m_eatAnimTimer = Time.time + EatAnimationDelay + UnityEngine.Random.Range(-EatAnimationDelay/2, EatAnimationDelay/2);
+                    m_zanim.SetTrigger("eat");
                 }
 
                 if (Time.time > m_sitTimer)
