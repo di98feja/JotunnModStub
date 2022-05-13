@@ -74,6 +74,7 @@ namespace RagnarsRokare.Factions
         private (string, Quaternion)[] m_foodList = new (string, Quaternion)[]
             {
                 ("CookedMeat", new Quaternion(0.5f, 0f, 0f, 0f)),
+                ("NeckTailGrilled", new Quaternion(0.5f, 0f, 0f, 0f)),
                 ("Tankard", Quaternion.identity),
                 ("Carrot", new Quaternion(0.0f, 0.9239f, -0.3827f, 0f)),
                 ("Honey", Quaternion.identity),
