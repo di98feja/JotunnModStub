@@ -286,7 +286,7 @@ namespace RagnarsRokare.Factions
                     m_zanim.SetTrigger("eat");
                 }
 
-                if (Time.time > m_sitTimer)
+                if (SitTime > 0 && Time.time > m_sitTimer)
                 {
                     aiBase.Brain.Fire(Trigger.StandUp);
                 }
@@ -307,7 +307,7 @@ namespace RagnarsRokare.Factions
                     m_zanim.SetTrigger("eat");
                 }
 
-                if (Time.time > m_sitTimer)
+                if (SitTime > 0 && Time.time > m_sitTimer)
                 {
                     aiBase.Brain.Fire(Trigger.StandUp);
                 }

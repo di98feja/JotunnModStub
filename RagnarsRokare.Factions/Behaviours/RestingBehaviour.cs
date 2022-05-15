@@ -25,6 +25,7 @@ namespace RagnarsRokare.Factions
             public string Sit { get { return $"{prefix}Sit"; } }
             public string Sleep { get { return $"{prefix}Sleep"; } }
             public string Eating { get { return $"{prefix}Eating"; } }
+            public string SubstateExit { get { return $"{prefix}SubstateExit"; } }
 
             public StateDef(string prefix)
             {
@@ -41,7 +42,7 @@ namespace RagnarsRokare.Factions
             public string SitDown { get { return $"{prefix}SitDown"; } }
             public string GotoBed { get { return $"{prefix}GotoBed"; } }
             public string FindFood { get { return $"{prefix}FindFood"; } }
-            public string ChangeState { get { return $"{prefix}ChangeState"; } }
+            public string ReEnter { get { return $"{prefix}ReEnter"; } }
             public TriggerDef(string prefix)
             {
                 this.prefix = prefix;
@@ -60,17 +61,17 @@ namespace RagnarsRokare.Factions
         public string SuccessState { get; set; }
         public string FailState { get; set; }
         public float RestUpdateTimeout { get; set; } = 20f;
-        public Vector3 LastKnownFoodPosition 
-        { 
-            get => lastKnownFoodPosition; 
-            set 
-            { 
+        public Vector3 LastKnownFoodPosition
+        {
+            get => lastKnownFoodPosition;
+            set
+            {
                 lastKnownFoodPosition = value;
                 if (m_eatingBehaviour != null)
                 {
                     m_eatingBehaviour.LastKnownFoodPosition = value;
                 }
-            } 
+            }
         }
         public float RandomCommentChance { get; set; } = 10f;
 
@@ -86,70 +87,49 @@ namespace RagnarsRokare.Factions
             Trigger = new TriggerDef(parentState + Prefix);
             var npcAi = aiBase as NpcAI;
             m_sleepBehaviour = new SleepBehaviour();
-            m_sleepBehaviour.SuccessState = State.Main;
-            m_sleepBehaviour.FailState = State.Main;
+            m_sleepBehaviour.SuccessState = State.SubstateExit;
+            m_sleepBehaviour.FailState = State.SubstateExit;
             m_sleepBehaviour.Configure(npcAi, brain, State.Sleep);
             m_sleepBehaviour.SleepUntilMorning = true;
 
             m_eatingBehaviour = new DynamicEatingBehaviour();
-            m_eatingBehaviour.SuccessState = State.Main;
-            m_eatingBehaviour.FailState = State.Main;
+            m_eatingBehaviour.SuccessState = State.SubstateExit;
+            m_eatingBehaviour.FailState = State.SubstateExit;
             m_eatingBehaviour.HealPercentageOnConsume = 0.25f + (StandingsManager.GetStandingTowards(npcAi.NView.GetZDO(), FactionManager.GetNpcFaction(npcAi.NView.GetZDO()))) / 100;
             m_eatingBehaviour.Configure(npcAi, brain, State.Eating);
 
             m_sitBehaviour = new SitBehaviour();
-            m_sitBehaviour.SuccessState = State.Main;
-            m_sitBehaviour.FailState = State.Main;
+            m_sitBehaviour.SuccessState = State.SubstateExit;
+            m_sitBehaviour.FailState = State.SubstateExit;
             m_sitBehaviour.SitTime = 60 + UnityEngine.Random.Range(-20, 20);
             m_sitBehaviour.Configure(npcAi, brain, State.Sit);
 
             brain.Configure(State.Main)
                .SubstateOf(parentState)
-               .PermitReentry(Trigger.ChangeState)
                .PermitDynamic(Trigger.Abort, () => FailState)
                .Permit(Trigger.FindFood, State.Eating)
                .Permit(Trigger.GotoBed, State.Sleep)
                .Permit(Trigger.SitDown, State.Sit)
+               .PermitReentry(Trigger.ReEnter)
                .OnEntry(t =>
                {
                    aiBase.StopMoving();
                    aiBase.UpdateAiStatus("Starting Resting");
                    Common.Dbgl("Entered RestingBehaviour", true, "NPC");
 
-               if (m_eatingBehaviour.IsHungry(npcAi.IsHurt))
-               {
-                   if (m_currentBehaviour != m_eatingBehaviour)
-                   {
-                       m_currentBehaviour = m_eatingBehaviour;
-                       npcAi.Brain.Fire(Trigger.FindFood);
-                   }
-               }
-               else if (EnvMan.instance.IsNight())
-               {
-                   if (m_currentBehaviour != m_sleepBehaviour)
-                   {
-                       m_currentBehaviour = m_sleepBehaviour;
-                       npcAi.Brain.Fire(Trigger.GotoBed);
-                   }
-               }
-               else if (EnvMan.instance.GetDayFraction() >= 0.70f)
-               {
-                   if (m_currentBehaviour != m_sitBehaviour)
-                   {
-                       npcAi.Brain.Fire(Trigger.SitDown);
-                   }
-               }
-               else
-               {
-                   if (m_currentBehaviour != m_sitBehaviour)
-                       {
-                           npcAi.Brain.Fire(Trigger.SitDown);
-                       }
-                   }
-
+                   var selectedState = SelectState(npcAi);
+                   m_currentBehaviour = selectedState.behaviour;
                    m_currentStateTimer = Time.time + RestUpdateTimeout;
+                   aiBase.Brain.Fire(selectedState.trigger);
                })
                .OnExit(() => Abort());
+
+            brain.Configure(State.SubstateExit)
+                .SubstateOf(State.Main)
+                .OnEntry(() =>
+                {
+                    aiBase.Brain.Fire(Trigger.ReEnter);
+                });
 
             brain.Configure(State.Sleep)
                 .SubstateOf(State.Main)
@@ -170,8 +150,27 @@ namespace RagnarsRokare.Factions
                         SayRandomThing(npcAi.Character);
                     }
                     Debug.Log($"{npcAi.Character.m_name}: Switching to Sit.");
-                    m_currentBehaviour = m_sitBehaviour;
                 });
+        }
+
+        private (string trigger, IDynamicBehaviour behaviour) SelectState(NpcAI npcAi)
+        {
+            if (m_eatingBehaviour.IsHungry(npcAi.IsHurt))
+            {
+                return (Trigger.FindFood, m_eatingBehaviour);
+            }
+            else if (EnvMan.instance.IsNight())
+            {
+                return (Trigger.GotoBed, m_sleepBehaviour);
+            }
+            else if (EnvMan.instance.GetDayFraction() >= 0.70f)
+            {
+                return (Trigger.SitDown, m_sitBehaviour);
+            }
+            else
+            {
+                return (Trigger.SitDown, m_sitBehaviour);
+            }
         }
 
         public bool RainCheck(MobAIBase mobAi)
@@ -206,9 +205,20 @@ namespace RagnarsRokare.Factions
             }
             else if (Time.time > m_currentStateTimer)
             {
-                m_currentBehaviour.Abort();
-                aiBase.Brain.Fire(Trigger.ChangeState);
-                return;
+                var selectedState = SelectState(aiBase as NpcAI);
+                if (selectedState.behaviour != m_currentBehaviour)
+                {
+                    m_currentBehaviour.Abort();
+                    m_currentBehaviour = selectedState.behaviour;
+                    m_currentStateTimer = Time.time + RestUpdateTimeout;
+                    aiBase.Brain.Fire(selectedState.trigger);
+                    return;
+                }
+                else
+                {
+                    m_currentStateTimer = Time.time + RestUpdateTimeout;
+                    return;
+                }
             }
             else
             {
