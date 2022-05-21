@@ -14,6 +14,7 @@ namespace RagnarsRokare.Factions
         private IDynamicBehaviour m_currentBehaviour;
         private WorkdayBehaviour m_workdayBehaviour;
         private RestingBehaviour m_restingBehaviour;
+        private DynamicFightBehaviour m_dynamicFightBehaviour;
         private float m_currentBehaviourTimeout;
         float m_fleeTimer;
 
