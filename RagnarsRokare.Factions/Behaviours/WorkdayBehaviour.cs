@@ -91,18 +91,23 @@ namespace RagnarsRokare.Factions
                    aiBase.StopMoving();
                    aiBase.UpdateAiStatus("Starting workday");
                    Common.Dbgl("Entered WorkdayBehaviour", true, "NPC");
-
-                   switch (UnityEngine.Random.Range(0, 3))
+                   var randomTask = npcAi.m_trainedAssignments.RandomOrDefault();
+                   if (randomTask == null)
                    {
-                       case 0:
-                           m_currentBehaviour = m_dynamicSortingBehaviour;
-                           break;
-                       case 1:
-                            m_currentBehaviour = m_dynamicWorkerBehaviour;
-                           break;
-                       case 2:
-                           m_currentBehaviour = m_dynamicRepairingBehaviour;
-                           break;
+                       brain.Fire(Trigger.Abort);
+                   }
+
+                   if (randomTask == Misc.Constants.SortingAssignmentName)
+                   {
+                       m_currentBehaviour = m_dynamicSortingBehaviour;
+                   }
+                   else if (randomTask == Misc.Constants.RepairingAssignmentName)
+                   {
+                       m_currentBehaviour = m_dynamicWorkerBehaviour;
+                   }
+                   else
+                   { 
+                        m_currentBehaviour = m_dynamicRepairingBehaviour;
                    }
 
                    m_currentTaskTimer = Time.time + TaskTimeout;

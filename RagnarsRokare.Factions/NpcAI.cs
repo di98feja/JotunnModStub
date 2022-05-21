@@ -111,8 +111,24 @@ namespace RagnarsRokare.Factions
             m_hirdBehaviour.FailState = State.Root;
             m_hirdBehaviour.Configure(this, Brain, State.DynamicBehaviour);
 
+            RegisterRPCMethods();
+
             ConfigureRoot();
             ConfigureDynamicBehaviour();
+        }
+
+        private void RegisterRPCMethods()
+        {
+            NView.Unregister(Constants.Z_updateTrainedAssignments);
+            NView.Register<string, string>(Constants.Z_updateTrainedAssignments, (long source, string uniqueID, string trainedAssignments) =>
+            {
+                if (NView.IsOwner()) return;
+                if (UniqueID == uniqueID)
+                {
+                    m_trainedAssignments.Clear();
+                    m_trainedAssignments.AddRange(trainedAssignments.Split());
+                }
+            });
         }
 
         private void ConfigureRoot()

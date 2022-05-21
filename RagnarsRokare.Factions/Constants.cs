@@ -29,5 +29,8 @@
         internal const string Z_PlayerActiveErrands = "RR_PLayerActiveErrands";
         internal const string Z_IsEncumbered = "RR_IsEncumbered";
         internal const string Z_SavedInventory= "RR_SavedInventory";
+
+        internal const string SortingAssignmentName = "SortItems";
+        internal const string RepairingAssignmentName = "RepairBuildPieces";
     }
 }

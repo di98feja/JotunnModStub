@@ -85,6 +85,7 @@ namespace RagnarsRokare.Factions
         {
             m_sitting = false;
             Common.HoldRightHandItem(m_aiBase.Character as Humanoid, null);
+            AttachStop(m_aiBase);
         }
 
         public void Configure(MobAIBase aiBase, StateMachine<string, string> brain, string parentState)
@@ -123,10 +124,6 @@ namespace RagnarsRokare.Factions
                     }
                     m_targetSeat = FindClosestSeat(aiBase);
                     brain.Fire(Trigger.WalkToChair);
-                    var randomItem = m_foodList[UnityEngine.Random.Range(0, m_foodList.Length)];
-                    var itemToHold = ObjectDB.instance.GetItemByName(randomItem.Item1);
-                    itemToHold.m_itemData.m_dropPrefab = ObjectDB.m_instance.GetItemByName(randomItem.Item1).gameObject;
-                    Common.HoldRightHandItem(aiBase.Character as Humanoid, itemToHold.m_itemData, randomItem.Item2);
                     return;
                 });
 
@@ -154,6 +151,9 @@ namespace RagnarsRokare.Factions
                         aiBase.Brain.Fire(Trigger.Abort);
                         return; // No place to sit
                     }
+
+                    HoldRandomFoodItem(aiBase);
+
                     m_sitTimer = Time.time + SitTime;
                     var attachPoint = m_targetSeat;
                     AttachStart(aiBase, attachPoint, null, hideWeapons: false, isBed: false, onShip: false, "attach_chair", new Vector3(0f, 0.5f, 0f));
@@ -164,6 +164,7 @@ namespace RagnarsRokare.Factions
                     // Trigger stand up animation
                     m_sitting = false;
                     AttachStop(aiBase);
+                    Common.HoldRightHandItem(aiBase.Character as Humanoid, null);
                 });
 
             brain.Configure(State.SitOnGround)
@@ -173,11 +174,23 @@ namespace RagnarsRokare.Factions
                 {
                     m_sitTimer = Time.time + SitTime;
                     EmoteManager.StartEmote(aiBase.NView, EmoteManager.Emotes.Sit, false);
+
+                    HoldRandomFoodItem(aiBase);
+
                 })
                 .OnExit(() =>
                 {
                     EmoteManager.StopEmote(aiBase.NView);
+                    Common.HoldRightHandItem(aiBase.Character as Humanoid, null);
                 });
+        }
+
+        private void HoldRandomFoodItem(MobAIBase aiBase)
+        {
+            var randomItem = m_foodList[UnityEngine.Random.Range(0, m_foodList.Length)];
+            var itemToHold = ObjectDB.instance.GetItemByName(randomItem.Item1);
+            itemToHold.m_itemData.m_dropPrefab = ObjectDB.m_instance.GetItemByName(randomItem.Item1).gameObject;
+            Common.HoldRightHandItem(aiBase.Character as Humanoid, itemToHold.m_itemData, randomItem.Item2);
         }
 
         private (Vector3, Vector3) FindPositionNearFire(MobAIBase aiBase)

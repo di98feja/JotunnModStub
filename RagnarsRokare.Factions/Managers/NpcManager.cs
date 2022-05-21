@@ -175,7 +175,6 @@ namespace RagnarsRokare.Factions
                 }
             }
             humanoid.HideHandItems();
-            nview.GetZDO().Set(Constants.Z_trainedAssignments, "Npc");
         }
 
         public static bool IsMale(GameObject npc)

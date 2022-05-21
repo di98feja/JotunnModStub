@@ -58,12 +58,24 @@ namespace RagnarsRokare.Factions
             }
         }
 
-        private String[] Comments = new String[]
+        private String[] WanderComments = new String[]
         {
             "*looks happy*",
             "I'm so glad you found me"
         };
 
+        private String[] StartFleeComments = new String[]
+        {
+            "Did you hear that?",
+            "Something is amiss..",
+            "AAAAHHHHH!"
+        };
+
+        private String[] EndFleeComments = new String[]
+        {
+            "Hm, I think it is safe now",
+            "Phuu, close call"
+        };
 
         // Settings
         public string StartState => State.Main;
@@ -93,12 +105,13 @@ namespace RagnarsRokare.Factions
             m_restingBehaviour.SuccessState = State.Main;
             m_restingBehaviour.FailState = State.Main;
             m_restingBehaviour.LastKnownFoodPosition = mobAi.StartPosition;
+            m_restingBehaviour.RestUpdateTimeout = StateTimeout / 4;
             m_restingBehaviour.Configure(npcAi, brain, State.RestingBehaviour);
 
             brain.Configure(State.Main)
                .SubstateOf(parentState)
                .PermitDynamic(Trigger.Abort, () => FailState)
-               .PermitIf(Trigger.Allerted, State.Flee, () => !brain.IsInState(State.Flee) && (mobAi.TimeSinceHurt < 20.0f || Common.Alarmed(mobAi.Instance, mobAi.Awareness)))
+               .Permit(Trigger.Allerted, State.Flee)
                .Permit(Trigger.Follow, State.Follow)
                .Permit(Trigger.GotoWork, State.WorkdayBehaviour)
                .Permit(Trigger.GotoRest, State.RestingBehaviour)
@@ -111,6 +124,7 @@ namespace RagnarsRokare.Factions
                    mobAi.Character.m_walkSpeed = 1.5f;
                    mobAi.Character.m_runSpeed = 5f;
                    mobAi.Character.m_swimSpeed = 2f;
+                   m_currentBehaviourTimeout = 0f;
                });
 
             brain.Configure(State.WorkdayBehaviour)
@@ -141,39 +155,36 @@ namespace RagnarsRokare.Factions
                 {
                     if (UnityEngine.Random.Range(0f, 100f) <= RandomCommentChance)
                     {
-                        SayRandomThing(npcAi.Character);
+                        SayRandomThing(npcAi.Character, WanderComments);
                     }
                     npcAi.UpdateAiStatus(State.Wander);
-                    _currentStateTimeout = Time.time + StateTimeout;
+                    _currentStateTimeout = Time.time + StateTimeout/4;
                     m_targetPosition = GetRandomPointInRadius(npcAi.HomePosition, 20f);
                     Debug.Log($"{npcAi.Character.m_name}: Switching to Wander.");
-                })
-                .OnExit(t =>
-                {
-                    npcAi.Character.m_zanim.SetBool(Character.encumbered, value: false);
                 });
 
             brain.Configure(State.Flee)
                 .SubstateOf(State.Main)
-                .PermitIf(Trigger.Update, State.Main, () => !Common.Alarmed(npcAi.Instance, Mathf.Max(1, npcAi.Awareness + 2)) && m_fleeTimer > 10f)
                 .OnEntry(t =>
                 {
                     m_fleeTimer = 0f;
                     npcAi.UpdateAiStatus("Flee");
                     npcAi.Instance.Alert();
+                    SayRandomThing(npcAi.Character, StartFleeComments);
                 })
                 .OnExit(t =>
                 {
                     (npcAi.Instance as MonsterAI).SetAlerted(false);
                     npcAi.Attacker = null;
                     npcAi.StopMoving();
+                    SayRandomThing(npcAi.Character, EndFleeComments);
                 });
         }
 
-        private void SayRandomThing(Character npc)
+        private void SayRandomThing(Character npc, string[] comments)
         {
-            int index = UnityEngine.Random.Range(0, Comments.Length);
-            npc.GetComponent<Talker>().Say(Talker.Type.Normal, Comments[index]);
+            int index = UnityEngine.Random.Range(0, WanderComments.Length);
+            npc.GetComponent<Talker>().Say(Talker.Type.Normal, comments[index]);
         }
 
         public void Update(MobAIBase instance, float dt)
@@ -184,7 +195,6 @@ namespace RagnarsRokare.Factions
             {
                 if (!monsterAi.GetFollowTarget())
                 {
-                    m_currentBehaviourTimeout = 0f;
                     instance.Brain.Fire(Trigger.SelectState);
                 }
                 else
@@ -195,14 +205,11 @@ namespace RagnarsRokare.Factions
             }
             else if (monsterAi.GetFollowTarget())
             {
-                m_currentBehaviour.Abort();
+                m_currentBehaviour?.Abort();
                 m_currentBehaviour = null;
                 instance.Brain.Fire(Trigger.Follow);
                 return;
             }
-
-            instance.Brain.Fire(Trigger.Allerted);
-            instance.Brain.Fire(Trigger.Update);
 
             if (instance.Brain.IsInState(State.Flee))
             {
@@ -216,7 +223,16 @@ namespace RagnarsRokare.Factions
                     instance.MoveAndAvoidFire(instance.HomePosition, dt, 0f, true, false);
                 }
                 m_fleeTimer += dt;
+                bool outOfDanger = !Common.Alarmed(instance.Instance, Mathf.Max(1, instance.Awareness + 2)) && m_fleeTimer > 10f;
+                if (outOfDanger)
+                {
+                    instance.Brain.Fire(Trigger.SelectState);
+                }
                 return;
+            }
+            else if (instance.TimeSinceHurt < 20.0f || Common.Alarmed(instance.Instance, instance.Awareness))
+            {
+                instance.Brain.Fire(Trigger.Allerted);
             }
 
             if (instance.Brain.IsInState(State.WorkdayBehaviour) && EnvMan.instance.GetDayFraction() >= 0.70f)

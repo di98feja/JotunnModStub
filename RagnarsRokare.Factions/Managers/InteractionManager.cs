@@ -10,7 +10,7 @@ namespace RagnarsRokare.Factions
 {
     internal static class InteractionManager
     {
-        public static UnityEngine.GameObject InteractionPanel { get; private set; }
+        public static UnityEngine.GameObject InteractionPanel { get; set; }
 
         public static void StartNpcInteraction(Character npc)
         {
@@ -46,6 +46,7 @@ namespace RagnarsRokare.Factions
             {
                 AddAccessInventoryDialog(npc, Player.m_localPlayer, responses);
                 AddFollowMeCommandDialog(MobAI.Common.GetNView(npc), Player.m_localPlayer, responses);
+                WorkAssignmentsDialog.AddWorkAssignmentsDialog(npcZdo, Player.m_localPlayer, responses);
             }
             else if (playerStanding >= Misc.Constants.Standing_Neutral)
             {
@@ -373,7 +374,7 @@ namespace RagnarsRokare.Factions
             return !string.IsNullOrEmpty(npcZdo.GetString(Constants.Z_GivenName));
         }
 
-        private class Response
+        internal class Response
         {
             public string Text { get; set; }
             public Action Callback { get; set; } = null;
