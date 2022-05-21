@@ -198,8 +198,9 @@ namespace RagnarsRokare.Factions
             var posNearFire = Vector3.zero;
             var firePos = Vector3.zero;
             var allPieces = new List<Piece>();
-            Piece.GetAllPiecesInRadius(aiBase.Character.transform.position, 20f, allPieces);
+            Piece.GetAllPiecesInRadius(aiBase.Character.transform.position, 30f, allPieces);
             var firepit = allPieces.Where(p => p.m_comfortGroup == Piece.ComfortGroup.Fire).Where(f => IsBurning(f)).RandomOrDefault();
+            if (firepit == null) return (posNearFire, firePos);
             bool found = false;
             for (int i = 0; i < 100 && !found; i++)
             {

@@ -30,7 +30,7 @@ namespace RagnarsRokare.Factions.Patches
                 if (standing >= Misc.Constants.Standing_Minimum)
                 {
                     str += Localization.instance.Localize("\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] to interact");
-                    str += $"\nMotivation:{(MobAI.MobManager.AliveMobs[npcZdo.GetString(Constants.Z_UniqueId)] as NpcAI).MotivationLevel}, Standing:{standing}";
+                    str += $"\nMotivation:{(MobAI.MobManager.AliveMobs[npcZdo.GetString(Constants.Z_UniqueId)] as NpcAI)?.MotivationLevel}, Standing:{standing}";
                 }
                 __result = str;
                 return false;
