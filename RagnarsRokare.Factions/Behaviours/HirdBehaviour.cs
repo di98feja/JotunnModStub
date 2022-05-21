@@ -14,6 +14,7 @@ namespace RagnarsRokare.Factions
         private IDynamicBehaviour m_currentBehaviour;
         private WorkdayBehaviour m_workdayBehaviour;
         private RestingBehaviour m_restingBehaviour;
+        private DynamicFightBehaviour m_dynamicFightBehaviour;
         private float m_currentBehaviourTimeout;
         float m_fleeTimer;
 
@@ -108,10 +109,15 @@ namespace RagnarsRokare.Factions
             m_restingBehaviour.RestUpdateTimeout = StateTimeout / 4;
             m_restingBehaviour.Configure(npcAi, brain, State.RestingBehaviour);
 
+            m_dynamicFightBehaviour = new DynamicFightBehaviour();
+            m_dynamicFightBehaviour.SuccessState = State.Main;
+            m_dynamicFightBehaviour.FailState = State.Flee;
+            m_dynamicFightBehaviour.Configure(npcAi, brain, State.Main);
+
             brain.Configure(State.Main)
                .SubstateOf(parentState)
                .PermitDynamic(Trigger.Abort, () => FailState)
-               .Permit(Trigger.Allerted, State.Flee)
+               .PermitIf(Trigger.Allerted, m_dynamicFightBehaviour.StartState, () => (!brain.IsInState(State.Flee) || !brain.IsInState(m_dynamicFightBehaviour.StartState))  && (mobAi.TimeSinceHurt < 20.0f || Common.Alarmed(mobAi.Instance, mobAi.Awareness)))
                .Permit(Trigger.Follow, State.Follow)
                .Permit(Trigger.GotoWork, State.WorkdayBehaviour)
                .Permit(Trigger.GotoRest, State.RestingBehaviour)
