@@ -103,11 +103,11 @@ namespace RagnarsRokare.Factions
                    }
                    else if (randomTask == Misc.Constants.RepairingAssignmentName)
                    {
-                       m_currentBehaviour = m_dynamicWorkerBehaviour;
+                       m_currentBehaviour = m_dynamicRepairingBehaviour;
                    }
                    else
                    { 
-                        m_currentBehaviour = m_dynamicRepairingBehaviour;
+                        m_currentBehaviour = m_dynamicWorkerBehaviour;
                    }
 
                    m_currentTaskTimer = Time.time + TaskTimeout;
