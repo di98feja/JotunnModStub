@@ -217,6 +217,12 @@ namespace RagnarsRokare.Factions
                 return;
             }
 
+            if (instance.Brain.IsInState(m_dynamicFightBehaviour.StartState))
+            {
+                m_dynamicFightBehaviour.Update(instance, dt);
+                return;
+            }
+
             if (instance.Brain.IsInState(State.Flee))
             {
                 if (instance.Attacker != null)
