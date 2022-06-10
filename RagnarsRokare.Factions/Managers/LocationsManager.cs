@@ -35,11 +35,6 @@ namespace RagnarsRokare.Factions
             embeddedResourceBundle.Unload(false);
         }
 
-        public static void SetupNpcLocations(On.ZoneSystem.orig_PrepareRandomSpawns orig, GameObject root, System.Collections.Generic.List<RandomSpawn> randomSpawns)
-        {
-            orig(root, randomSpawns);
-        }
-
         internal static void PrepareNetViews(On.ZoneSystem.orig_PrepareNetViews orig, GameObject root, List<ZNetView> views)
         {
             string[] npcLocations = new string[] { "WoodHouse1", "WoodHouse2", "Farm" };

@@ -112,6 +112,8 @@ namespace RagnarsRokare.Factions
             m_dynamicFightBehaviour = new DynamicFightBehaviour();
             m_dynamicFightBehaviour.SuccessState = State.Main;
             m_dynamicFightBehaviour.FailState = State.Flee;
+            m_dynamicFightBehaviour.AgressionLevel = mobAi.Agressiveness;
+            m_dynamicFightBehaviour.AwarenessLevel = mobAi.Awareness;
             m_dynamicFightBehaviour.Configure(npcAi, brain, State.Main);
 
             brain.Configure(State.Main)

@@ -36,9 +36,9 @@ namespace RagnarsRokare.Factions
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), PluginGUID);
 
             PrefabManager.OnVanillaPrefabsAvailable += PrefabManager_OnVanillaPrefabsAvailable;
+            
             MobAI.MobManager.RegisterMobAI(typeof(NpcAI));
             On.ZoneSystem.PrepareNetViews += LocationsManager.PrepareNetViews;
-            On.ZoneSystem.PrepareRandomSpawns += LocationsManager.SetupNpcLocations;
 
             // Jotunn comes with MonoMod Detours enabled for hooking Valheim's code
             // https://github.com/MonoMod/MonoMod
