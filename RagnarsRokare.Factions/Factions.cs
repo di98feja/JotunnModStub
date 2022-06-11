@@ -32,17 +32,7 @@ namespace RagnarsRokare.Factions
         private void Awake()
         {
             InitInputs();
-            var harmony = new Harmony(PluginGUID);
-            harmony.PatchAll(typeof(Factions));
-            harmony.PatchAll(typeof(Bed_patch));
-            harmony.PatchAll(typeof(LocalizationManager));
-            harmony.PatchAll(typeof(AttachManager));
-            harmony.PatchAll(typeof(NpcContainer));
-            harmony.PatchAll(typeof(Character_patches));
-            harmony.PatchAll(typeof(Minimap_patches));
-            harmony.PatchAll(typeof(Sign_patches));
-            harmony.PatchAll(typeof(Tamable_patches));
-
+            Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), PluginGUID);
             PrefabManager.OnVanillaPrefabsAvailable += PrefabManager_OnVanillaPrefabsAvailable;
             
             MobAI.MobManager.RegisterMobAI(typeof(NpcAI));
@@ -95,15 +85,16 @@ namespace RagnarsRokare.Factions
         }
 
         [HarmonyPatch(typeof(FejdStartup), nameof(FejdStartup.Awake)), HarmonyPostfix, HarmonyPriority(Priority.First)]
-        private void FejdStartup_Awake(FejdStartup __instance)
+        private static void FejdStartup_Awake(FejdStartup __instance)
         {
             AttachManager.Init();
             MobAI.EventManager.RegisteredMobsChanged += Minimap_patches.RegisteredMobsChanged;
             MobAI.EventManager.ServerShutdown += NpcManager.SaveAllNPCs;
         }
 
-        [HarmonyPatch(typeof(ZRoutedRpc), MethodType.Constructor), HarmonyPostfix, HarmonyPriority(Priority.First)]
-        private void InitRPCs(ZRoutedRpc __instance, bool server)
+        [HarmonyPatch(typeof(ZRoutedRpc), MethodType.Constructor, typeof(bool))]
+        [HarmonyPostfix]
+        private static void InitRPCs(ZRoutedRpc __instance, bool server)
         {
             NpcManager.InitRPCs();
         }
