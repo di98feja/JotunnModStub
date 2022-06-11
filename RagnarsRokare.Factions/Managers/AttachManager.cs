@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HarmonyLib;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,7 +9,6 @@ namespace RagnarsRokare.Factions
     {
         public static void Init()
         {
-            On.Character.GetRelativePosition += Character_GetRelativePosition;
         }
 
         private static Dictionary<ZDOID, Transform> m_attachPoints = new Dictionary<ZDOID, Transform>();
@@ -49,11 +49,12 @@ namespace RagnarsRokare.Factions
             }
         }
 
-        private static bool Character_GetRelativePosition(On.Character.orig_GetRelativePosition orig, Character self, out ZDOID parent, out string attachJoint, out UnityEngine.Vector3 relativePos, out UnityEngine.Vector3 relativeVel)
+        [HarmonyPatch(typeof(Character), nameof(Character.GetRelativePosition)), HarmonyPrefix]
+        private static bool Character_GetRelativePosition(Character __instance, out ZDOID parent, out string attachJoint, out UnityEngine.Vector3 relativePos, out UnityEngine.Vector3 relativeVel, bool __result)
         {
-            if (self.gameObject.name.Contains("NPC") && IsAttached(GetZdoId(self)))
+            if (__instance.gameObject.name.Contains("NPC") && IsAttached(GetZdoId(__instance)))
             {
-                var attachPoint = m_attachPoints[GetZdoId(self)];
+                var attachPoint = m_attachPoints[GetZdoId(__instance)];
                 ZNetView componentInParent = attachPoint.GetComponentInParent<ZNetView>();
                 if ((bool)componentInParent && componentInParent.IsValid())
                 {
@@ -66,13 +67,18 @@ namespace RagnarsRokare.Factions
                     else
                     {
                         attachJoint = "";
-                        relativePos = componentInParent.transform.InverseTransformPoint(self.transform.position);
+                        relativePos = componentInParent.transform.InverseTransformPoint(__instance.transform.position);
                     }
                     relativeVel = Vector3.zero;
-                    return true;
+                    __result = true;
+                    return false;
                 }
             }
-            return orig(self, out parent, out attachJoint, out relativePos, out relativeVel);
+            parent = ZDOID.None;
+            relativePos = Vector3.zero;
+            relativeVel = Vector3.zero;
+            attachJoint = String.Empty;
+            return true;
         }
 
         private static ZDOID GetZdoId(Character self)

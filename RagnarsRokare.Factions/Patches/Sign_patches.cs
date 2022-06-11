@@ -4,7 +4,7 @@ using System;
 using System.Linq;
 using UnityEngine;
 
-namespace RagnarsRokare.Factions.Patches
+namespace RagnarsRokare.Factions
 {
     public static class Sign_patches
     {

@@ -32,26 +32,21 @@ namespace RagnarsRokare.Factions
         private void Awake()
         {
             InitInputs();
-
-            Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), PluginGUID);
+            var harmony = new Harmony(PluginGUID);
+            harmony.PatchAll(typeof(Factions));
+            harmony.PatchAll(typeof(Bed_patch));
+            harmony.PatchAll(typeof(LocalizationManager));
+            harmony.PatchAll(typeof(AttachManager));
+            harmony.PatchAll(typeof(NpcContainer));
+            harmony.PatchAll(typeof(Character_patches));
+            harmony.PatchAll(typeof(Minimap_patches));
+            harmony.PatchAll(typeof(Sign_patches));
+            harmony.PatchAll(typeof(Tamable_patches));
 
             PrefabManager.OnVanillaPrefabsAvailable += PrefabManager_OnVanillaPrefabsAvailable;
             
             MobAI.MobManager.RegisterMobAI(typeof(NpcAI));
-            On.ZoneSystem.PrepareNetViews += LocationsManager.PrepareNetViews;
 
-            // Jotunn comes with MonoMod Detours enabled for hooking Valheim's code
-            // https://github.com/MonoMod/MonoMod
-            On.FejdStartup.Awake += FejdStartup_Awake;
-            On.ZRoutedRpc.ctor += InitRPCs;
-            On.Bed.Awake += Bed_patch.Bed_Awake;
-            On.Bed.GetHoverText += Bed_patch.Bed_GetHoverText;
-            On.Bed.Interact += Bed_patch.Bed_Interact;
-            On.ObjectDB.Awake += ObjectDB_Awake;
-            On.Humanoid.GiveDefaultItems += Humanoid_GiveDefaultItems;
-            On.Player.OnSpawned += Player_OnSpawned;
-
-            
             // Jotunn comes with its own Logger class to provide a consistent Log style for all mods using it
             Jotunn.Logger.LogInfo($"{PluginName} v{PluginVersion} has landed");
 
@@ -59,10 +54,17 @@ namespace RagnarsRokare.Factions
             // https://valheim-modding.github.io/Jotunn/tutorials/overview.html
         }
 
-        private void Humanoid_GiveDefaultItems(On.Humanoid.orig_GiveDefaultItems orig, Humanoid self)
+        [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.GiveDefaultItems)), HarmonyPrefix, HarmonyPriority(Priority.First)]
+        private static bool Humanoid_GiveDefaultItems(Humanoid __instance)
         {
-            if (self.gameObject.name.Contains("NPC")) return;
-            orig(self);
+            if (__instance.gameObject.name.Contains("NPC"))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
         }
 
         private void PrefabManager_OnVanillaPrefabsAvailable()
@@ -70,15 +72,15 @@ namespace RagnarsRokare.Factions
             LoadAssets();
         }
 
-        private void ObjectDB_Awake(On.ObjectDB.orig_Awake orig, ObjectDB self)
+        [HarmonyPatch(typeof(ObjectDB), nameof(ObjectDB.Awake)), HarmonyPostfix, HarmonyPriority(Priority.First)]
+        private static void ObjectDB_Awake()
         {
-            orig(self);
             ErrandsManager.Init();
         }
 
-        private void Player_OnSpawned(On.Player.orig_OnSpawned orig, Player self)
+        [HarmonyPatch(typeof(Player), nameof(Player.OnSpawned)), HarmonyPostfix]
+        private static void Player_OnSpawned(Player __instance)
         {
-            orig(self);
             foreach (var loc in ZoneSystem.instance.m_locationInstances)
             {
                 if (loc.Value.m_location.m_prefabName.Contains("WoodHouse") && loc.Value.m_location.m_netViews.Any(z => z.gameObject.name.Contains("goblin_bed")))
@@ -92,30 +94,17 @@ namespace RagnarsRokare.Factions
             }
         }
 
-        private void FejdStartup_Awake(On.FejdStartup.orig_Awake orig, FejdStartup self)
+        [HarmonyPatch(typeof(FejdStartup), nameof(FejdStartup.Awake)), HarmonyPostfix, HarmonyPriority(Priority.First)]
+        private void FejdStartup_Awake(FejdStartup __instance)
         {
-            // This code runs before Valheim's FejdStartup.Awake
-            Jotunn.Logger.LogInfo("FejdStartup is going to awake");
-
-            // Call this method so the original game method is invoked
-            orig(self);
-
             AttachManager.Init();
             MobAI.EventManager.RegisteredMobsChanged += Minimap_patches.RegisteredMobsChanged;
             MobAI.EventManager.ServerShutdown += NpcManager.SaveAllNPCs;
-
-            // This code runs after Valheim's FejdStartup.Awake
-            Jotunn.Logger.LogInfo("FejdStartup has awoken");
         }
 
-        private void RegisteredMobsChanged(object sender, MobAI.RegisteredMobsChangedEventArgs e)
+        [HarmonyPatch(typeof(ZRoutedRpc), MethodType.Constructor), HarmonyPostfix, HarmonyPriority(Priority.First)]
+        private void InitRPCs(ZRoutedRpc __instance, bool server)
         {
-            throw new System.NotImplementedException();
-        }
-
-        private void InitRPCs(On.ZRoutedRpc.orig_ctor orig, global::ZRoutedRpc self, bool server)
-        {
-            orig(self, server);
             NpcManager.InitRPCs();
         }
 

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+﻿using HarmonyLib;
 
 namespace RagnarsRokare.Factions
 {
@@ -14,17 +14,15 @@ namespace RagnarsRokare.Factions
             m_nview.Register<bool>("OpenRespons", RPC_OpenRespons);
 
             m_npc = gameObject.GetComponent<Humanoid>();
-            On.InventoryGui.OnRightClickItem += InventoryGui_OnRightClickItem;
-            On.InventoryGui.Hide += InventoryGui_Hide;
         }
 
-        private void InventoryGui_Hide(On.InventoryGui.orig_Hide orig, InventoryGui self)
+        [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.Hide)), HarmonyPrefix]
+        private void InventoryGui_Hide(InventoryGui __instance)
         {
-            if (self.m_currentContainer?.m_inventory == m_humanoidInventory)
+            if (__instance.m_currentContainer?.m_inventory == m_humanoidInventory)
             {
                 Save(m_npc);
             }
-            orig(self);
         }
 
         private new void RPC_OpenRespons(long uid, bool granted)
@@ -46,7 +44,8 @@ namespace RagnarsRokare.Factions
             }
         }
 
-        private void InventoryGui_OnRightClickItem(On.InventoryGui.orig_OnRightClickItem orig, InventoryGui self, InventoryGrid grid, ItemDrop.ItemData item, Vector2i pos)
+        [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.OnRightClickItem)), HarmonyPrefix]
+        private bool InventoryGui_OnRightClickItem(InventoryGui __instance, InventoryGrid grid, ItemDrop.ItemData item, Vector2i pos)
         {
             if (grid.GetInventory() == this.GetInventory())
             {
@@ -62,10 +61,11 @@ namespace RagnarsRokare.Factions
                         m_npc.EquipItem(item);
                     }
                 }
+                return false;
             }
             else
             {
-                orig(self, grid, item, pos);
+                return true;
             }
         }
 

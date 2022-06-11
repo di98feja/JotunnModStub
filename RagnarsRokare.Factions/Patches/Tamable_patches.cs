@@ -1,7 +1,7 @@
 ﻿using HarmonyLib;
 using UnityEngine;
 
-namespace RagnarsRokare.Factions.Patches
+namespace RagnarsRokare.Factions
 {
     internal class Tamable_patches
     {

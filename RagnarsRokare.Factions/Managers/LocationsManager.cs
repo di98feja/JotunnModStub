@@ -1,4 +1,5 @@
-﻿using Jotunn.Managers;
+﻿using HarmonyLib;
+using Jotunn.Managers;
 using Jotunn.Utils;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,7 +36,8 @@ namespace RagnarsRokare.Factions
             embeddedResourceBundle.Unload(false);
         }
 
-        internal static void PrepareNetViews(On.ZoneSystem.orig_PrepareNetViews orig, GameObject root, List<ZNetView> views)
+        [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.PrepareNetViews)), HarmonyPrefix, HarmonyPriority(Priority.First)]
+        internal static void PrepareNetViews(ZoneSystem __instance, GameObject root, List<ZNetView> views)
         {
             string[] npcLocations = new string[] { "WoodHouse1", "WoodHouse2", "Farm" };
             if (npcLocations.Contains(root.name))
@@ -52,7 +54,6 @@ namespace RagnarsRokare.Factions
                     bh.m_chanceToSpawn = 0f;
                 }
             }
-            orig(root, views);
         }
 
         private static void GetRecursiveGameObject(GameObject go, string name, List<GameObject> found)
