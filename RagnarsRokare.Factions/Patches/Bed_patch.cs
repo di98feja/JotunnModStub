@@ -4,6 +4,7 @@ using System.Linq;
 
 namespace RagnarsRokare.Factions
 {
+    [HarmonyPatch()]
     internal class Bed_patch
     {
 

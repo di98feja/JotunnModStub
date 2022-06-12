@@ -3,6 +3,7 @@ using System;
 
 namespace RagnarsRokare.Factions
 {
+    [HarmonyPatch()]
     internal class NpcContainer : Container, Interactable
     {
         private Humanoid m_npc;
@@ -38,10 +39,6 @@ namespace RagnarsRokare.Factions
                     }
                 }
                 e.WasHandled = true;
-            }
-            else
-            {
-                e.WasHandled = false;
             }
         }
 
@@ -92,7 +89,7 @@ namespace RagnarsRokare.Factions
         private static bool InventoryGui_OnRightClickItem(InventoryGrid grid, ItemDrop.ItemData item, Vector2i pos)
         {
             var eventArgs = new ItemRightClickedEventArgs(grid, item, pos);
-            OnItemRightClicked(eventArgs);            
+            OnItemRightClicked(eventArgs);
             return !eventArgs.WasHandled;
         }
 
@@ -149,7 +146,7 @@ namespace RagnarsRokare.Factions
             public InventoryGrid Grid { get; set; }
             public ItemDrop.ItemData Item { get; set; }
             public Vector2i Pos { get; set; }
-            public bool WasHandled { get; set; }
+            public bool WasHandled { get; set; } = false;
 
             public ItemRightClickedEventArgs(InventoryGrid grid, ItemDrop.ItemData item, Vector2i pos)
             {

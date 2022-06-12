@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace RagnarsRokare.Factions
 {
+    [HarmonyPatch()]
     internal static class LocationsManager
     {
         private static GameObject m_npcBedPrefab;

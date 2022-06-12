@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace RagnarsRokare.Factions
 {
+    [HarmonyPatch()]
     public static class AttachManager
     {
         public static void Init()

@@ -15,6 +15,7 @@ using UnityEngine;
 
 namespace RagnarsRokare.Factions
 {
+    [HarmonyPatch()]
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
     [BepInDependency(Jotunn.Main.ModGuid)]
     [BepInDependency(MobAI.MobAILib.ModId)]
@@ -33,8 +34,8 @@ namespace RagnarsRokare.Factions
         {
             InitInputs();
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), PluginGUID);
+
             PrefabManager.OnVanillaPrefabsAvailable += PrefabManager_OnVanillaPrefabsAvailable;
-            
             MobAI.MobManager.RegisterMobAI(typeof(NpcAI));
 
             // Jotunn comes with its own Logger class to provide a consistent Log style for all mods using it
@@ -60,11 +61,6 @@ namespace RagnarsRokare.Factions
         private void PrefabManager_OnVanillaPrefabsAvailable()
         {
             LoadAssets();
-        }
-
-        [HarmonyPatch(typeof(ObjectDB), nameof(ObjectDB.Awake)), HarmonyPostfix, HarmonyPriority(Priority.First)]
-        private static void ObjectDB_Awake()
-        {
             ErrandsManager.Init();
         }
 
